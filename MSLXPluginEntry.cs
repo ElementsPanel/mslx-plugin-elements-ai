@@ -16,7 +16,7 @@ public sealed class MSLXPluginEntry : IPlugin
     public string Id => PluginId;
     public string Name => "Elements AI";
     public string Description => "在 MSLX 中使用 AI 助手管理实例、终端、配置文件和模组资源。";
-    public string Version => "0.1.1";
+    public string Version => "0.1.5";
     public string Icon => "icon.png";
     public string MinSDKVersion => "1.7.0.2";
     public string Developer => "ElementsPanel";
@@ -32,7 +32,7 @@ public sealed class MSLXPluginEntry : IPlugin
 
     public void OnLoad()
     {
-        SDK.MSLX.Logger.Info("[Elements AI] 已载入，可以从实例控制台页眉右侧打开 AI 助手。");
+        SDK.MSLX.Logger.Info("[Elements AI] 已载入，可以从全局页眉右侧打开 AI 助手。");
     }
 
     public void OnUnload()

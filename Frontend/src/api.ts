@@ -62,7 +62,7 @@ export async function sendMessage(
     headers: {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
-      Authorization: `Bearer ${token()}`,
+      'x-user-token': token(),
     },
     body: JSON.stringify({ message, conversationId, modelId, permissionMode, currentInstanceId }),
   });

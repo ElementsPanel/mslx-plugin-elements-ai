@@ -1,20 +1,26 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { ChatIcon } from 'tdesign-icons-vue-next';
 import AiWorkspace from '../components/AiWorkspace.vue';
 
 const props = defineProps<{ serverId?: number }>();
 const visible = ref(false);
 const headerTarget = shallowRef<HTMLElement | null>(null);
+const routeInstanceId = ref<number>();
 let headerObserver: MutationObserver | undefined;
+const currentInstanceId = computed(() => props.serverId ?? routeInstanceId.value);
 
 function open() {
   visible.value = true;
 }
 
 function syncHeaderTarget() {
+  const match = window.location.pathname.match(/^\/instance\/console\/(\d+)(?:\/|$)/);
+  routeInstanceId.value = match ? Number(match[1]) : undefined;
+
   const operations = document.querySelector<HTMLElement>(
-    '.mslx-webpanel-header-layout .t-head-menu__operations',
+    '.mslx-webpanel-header-layout .t-menu__operations, '
+      + '.mslx-webpanel-header-layout .t-head-menu__operations',
   );
   const next = operations?.firstElementChild instanceof HTMLElement
     ? operations.firstElementChild
@@ -60,7 +66,7 @@ defineExpose({ open });
     :footer="false"
   >
     <div class="instance-ai-sidebar">
-      <AiWorkspace :current-instance-id="props.serverId" compact />
+      <AiWorkspace :current-instance-id="currentInstanceId" compact />
     </div>
   </t-drawer>
 </template>

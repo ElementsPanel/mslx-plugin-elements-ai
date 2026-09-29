@@ -88,7 +88,7 @@ public sealed class OpenAiProvider
         using var client = new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
         using var request = new HttpRequestMessage(HttpMethod.Post, model.Endpoint);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-        request.Headers.UserAgent.ParseAdd("MSLX-Elements-AI/0.1.0");
+        request.Headers.UserAgent.ParseAdd("MSLX-Elements-AI/0.1.5");
         if (!string.IsNullOrEmpty(model.ApiKey))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", model.ApiKey);
 
