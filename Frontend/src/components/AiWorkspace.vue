@@ -45,7 +45,6 @@ const selectedModel = ref('');
 const permissionMode = ref<PermissionMode>('default');
 const messages = ref<ChatMessage[]>([]);
 const conversationId = ref<string>();
-const canContinue = ref(true);
 const draft = ref('');
 const loading = ref(false);
 const checking = ref(false);
@@ -76,7 +75,7 @@ const modelSaving = ref(false);
 const models = computed(() => status.value?.models || []);
 const personalModels = computed(() => models.value.filter((model) => model.source === 'personal'));
 const canSend = computed(() =>
-  Boolean(status.value?.ready && selectedModel.value && draft.value.trim() && !loading.value && canContinue.value),
+  Boolean(status.value?.ready && selectedModel.value && draft.value.trim() && !loading.value),
 );
 const currentInstanceLabel = computed(() => props.currentInstanceId ? `实例 #${props.currentInstanceId}` : '全局助手');
 const modelValid = computed(() =>
@@ -95,7 +94,6 @@ function reset(clearDraft = false) {
   controller.value = undefined;
   messages.value = [];
   conversationId.value = undefined;
-  canContinue.value = true;
   loading.value = false;
   error.value = '';
   retryText.value = '';
@@ -250,8 +248,10 @@ async function openConversationItem(id: string) {
     const conversation = await getConversation(id);
     messages.value = conversation.messages;
     conversationId.value = conversation.id;
-    canContinue.value = conversation.canContinue;
-    selectedModel.value = conversation.canContinue ? conversation.modelId : '';
+    if (models.value.some((model) => model.id === conversation.modelId))
+      selectedModel.value = conversation.modelId;
+    else if (!models.value.some((model) => model.id === selectedModel.value))
+      selectedModel.value = models.value[0]?.id || '';
     view.value = 'chat';
     await scrollToEnd();
   } catch (err) {
@@ -488,7 +488,6 @@ onBeforeUnmount(() => controller.value?.abort());
         <span v-if="progressText">{{ progressText }}</span>
       </div>
       <div v-if="error" class="error-strip">{{ error }}</div>
-      <div v-if="!canContinue" class="error-strip">此历史对话的模型或账号权限已变化。请开始新对话。</div>
 
       <footer class="composer">
         <div class="composer-controls">

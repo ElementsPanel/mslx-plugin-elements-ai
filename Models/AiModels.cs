@@ -130,7 +130,6 @@ public class ConversationSummary
 public sealed class ConversationDetail : ConversationSummary
 {
     public List<ChatMessage> Messages { get; set; } = [];
-    public bool CanContinue { get; set; }
 }
 
 public sealed class ProviderMessage

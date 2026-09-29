@@ -75,7 +75,6 @@ export interface ConversationSummary {
 
 export interface ConversationDetail extends ConversationSummary {
   messages: ChatMessage[];
-  canContinue: boolean;
 }
 
 export type ChatEvent =

@@ -63,7 +63,6 @@ public sealed class AiChatService
     {
         var conversation = await _store.GetConversationAsync(user.UserId, id, cancellationToken)
                            ?? throw new AiValidationException("对话不存在。");
-        var models = await _store.ListModelsAsync(user.UserId, cancellationToken);
         return new ConversationDetail
         {
             Id = conversation.Id,
@@ -71,8 +70,7 @@ public sealed class AiChatService
             ModelId = conversation.ModelId,
             ModelName = conversation.ModelName,
             UpdatedAt = conversation.UpdatedAt,
-            Messages = conversation.Messages,
-            CanContinue = conversation.Scope == user.Scope && models.Any(model => model.Id == conversation.ModelId)
+            Messages = conversation.Messages
         };
     }
 
@@ -338,10 +336,8 @@ public sealed class AiChatService
     {
         if (!string.IsNullOrEmpty(request.ConversationId))
         {
-            var existing = await _store.GetConversationAsync(user.UserId, request.ConversationId, cancellationToken)
-                           ?? throw new AiValidationException("对话不存在。");
-            if (existing.Scope != user.Scope) throw new AiValidationException("账号权限已变化，请开始新对话。");
-            return existing;
+            return await _store.GetConversationAsync(user.UserId, request.ConversationId, cancellationToken)
+                   ?? throw new AiValidationException("对话不存在。");
         }
         return new ConversationRecord
         {
