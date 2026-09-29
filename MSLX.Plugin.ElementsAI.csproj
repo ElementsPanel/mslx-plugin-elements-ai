@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Frontend\dist\**\*" />
+    <Compile Remove="Tests\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

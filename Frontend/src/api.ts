@@ -64,7 +64,10 @@ export async function sendMessage(
       'X-Requested-With': 'XMLHttpRequest',
       'x-user-token': token(),
     },
-    body: JSON.stringify({ message, conversationId, modelId, permissionMode, currentInstanceId }),
+    body: JSON.stringify({
+      message, conversationId, modelId, permissionMode, currentInstanceId,
+      currentNodeId: localStorage.getItem('ACTIVE_NODE_ID') || 'local',
+    }),
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));

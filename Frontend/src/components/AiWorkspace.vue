@@ -378,6 +378,7 @@ function confirmDeleteModel(source: 'personal' | 'preset', model: ModelOption) {
 
 function toolLabel(name?: string) {
   const labels: Record<string, string> = {
+    list_nodes: '查询节点', execute_node_command: '执行节点命令',
     ask_user: '询问用户', list_instances: '查询实例', get_instance: '读取实例', read_terminal: '读取终端',
     control_instance: '控制实例', send_command: '发送命令', update_instance: '更新实例', create_instance: '创建实例',
     delete_instance: '删除实例', list_files: '列出文件', read_file: '读取文件', edit_file: '编辑文件',
@@ -456,7 +457,7 @@ onBeforeUnmount(() => controller.value?.abort());
               <CheckCircleIcon v-else-if="message.ok" class="tool-status-icon success" size="16px" />
               <ErrorCircleIcon v-else class="tool-status-icon failed" size="16px" />
               <strong>{{ toolLabel(message.tool) }}</strong>
-              <small>{{ message.pending ? '处理中' : message.ok ? '已完成' : '未执行' }}</small>
+              <small>{{ message.pending ? '处理中' : message.ok ? '已完成' : message.commandResult ? '执行失败' : '未执行' }}</small>
             </div>
             <div v-if="message.approval" class="approval-box">
               <p>该操作需要你的确认：</p>
@@ -477,6 +478,12 @@ onBeforeUnmount(() => controller.value?.abort());
               </div>
             </div>
             <FileDiffView v-if="message.diff" :diff="message.diff" />
+            <div v-if="message.commandResult" class="command-result">
+              <p>节点 {{ message.commandResult.nodeId }} · {{ message.commandResult.timedOut ? '执行超时' : `退出码 ${message.commandResult.exitCode}` }}</p>
+              <pre v-if="message.commandResult.stdout">{{ message.commandResult.stdout }}</pre>
+              <pre v-if="message.commandResult.stderr">{{ message.commandResult.stderr }}</pre>
+              <small v-if="message.commandResult.truncated">输出过长，已截断。</small>
+            </div>
           </div>
 
           <div v-else class="error-message">{{ message.content }}</div>
@@ -624,6 +631,9 @@ onBeforeUnmount(() => controller.value?.abort());
 @keyframes spin { to { transform: rotate(360deg); } }
 .approval-box, .question-box { margin-top: 0.65rem; padding: 0.7rem 0.8rem; border-left: 2px solid var(--td-component-border); color: var(--td-text-color-secondary); }
 .approval-box p, .question-box p { margin: 0 0 0.55rem; font-weight: 600; }
+.command-result { margin-top: 0.65rem; color: var(--td-text-color-secondary); }
+.command-result p { margin: 0 0 0.5rem; font-size: 12px; }
+.command-result pre { margin: 0.4rem 0; padding: 0.6rem; max-height: 300px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 6px; color: #e5e7eb; background: #151922; }
 .approval-box pre { overflow: auto; max-height: 240px; white-space: pre-wrap; margin: 0 0 0.65rem; padding: 0.6rem; border-radius: 6px; color: #e5e7eb; background: #151922; }
 .option-list { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .custom-answer { display: flex; gap: 0.5rem; margin-top: 0.55rem; }.custom-answer input { flex: 1; }

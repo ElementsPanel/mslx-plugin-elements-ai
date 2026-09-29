@@ -37,16 +37,17 @@ public sealed class MslxToolService(
     IInstanceConsoleService console,
     IUnifiedResourceService resources,
     UserContext user,
-    MslxHostRequestContext hostRequest)
+    MslxHostRequestContext hostRequest,
+    NodeCommandService nodeCommands)
 {
     private const int MaxTextBytes = 64 * 1024;
     private const string MslApiBase = "https://api.mslmc.cn";
-    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.8";
+    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.9";
     private readonly Dictionary<string, string> _fileReads = new(StringComparer.Ordinal);
 
     public static readonly HashSet<string> SensitiveTools =
     [
-        "send_command", "update_instance", "create_instance", "delete_instance",
+        "send_command", "execute_node_command", "update_instance", "create_instance", "delete_instance",
         "edit_file", "create_file", "delete_file", "download_resource"
     ];
 
@@ -144,6 +145,12 @@ public sealed class MslxToolService(
         tools.Add(Define("list_msl_java_versions", "List Java versions available for online installation by MSLX on this host. This is read-only.", new JsonObject()));
         if (admin)
         {
+            tools.Add(Define("list_nodes", "List the local MSLX node and registered remote nodes. Use exact node IDs from this result for node commands. Credentials and connection secrets are not returned.", new JsonObject()));
+            tools.Add(Define("execute_node_command", "Execute an explicitly requested, non-interactive operating-system shell command on one exact node from list_nodes. Use nodeId=local for this MSLX host. Unix uses /bin/sh; Windows uses cmd.exe. This is not a Minecraft console command. Runs with the MSLX service account's OS permissions, inside its container if containerized. Remote nodes must have this plugin installed. Default mode requires approval. Returns exit code, stdout and stderr (up to 16000 characters each). Do not launch background processes or retry when execution status is unknown.", new JsonObject
+            {
+                ["nodeId"] = StringSchema(100), ["command"] = StringSchema(4096),
+                ["workingDirectory"] = StringSchema(2048), ["timeoutSeconds"] = IntegerSchema(1, 120)
+            }, "nodeId", "command"));
             tools.Add(Define("create_instance", "Create an MSLX Java instance. For coreSource=msl, core is an official MSL core identifier and coreVersion plus javaVersion are required; basePath may be omitted so MSLX uses its default directory, and MSLX downloads the core and Java online. For coreSource=local (or omitted), provide an absolute basePath, local core filename and java path/value. Never start the new instance automatically.", new JsonObject
             {
                 ["name"] = StringSchema(100), ["basePath"] = StringSchema(2048),
@@ -168,6 +175,11 @@ public sealed class MslxToolService(
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (name is "list_nodes" or "execute_node_command")
+        {
+            if (!user.IsAdmin) throw new ToolException("仅管理员可以执行节点工具。");
+            NodeCommandService.RequireAdmin(user.UserId);
+        }
         return name switch
         {
             "list_instances" => Result(ListInstances()),
@@ -175,6 +187,8 @@ public sealed class MslxToolService(
             "read_terminal" => Result(ReadTerminal(args)),
             "control_instance" => Result(await ControlInstanceAsync(args)),
             "send_command" => Result(SendCommand(args)),
+            "list_nodes" when user.IsAdmin => Result(await nodeCommands.ListNodesAsync(hostRequest, cancellationToken)),
+            "execute_node_command" when user.IsAdmin => await ExecuteNodeCommandAsync(args, cancellationToken),
             "update_instance" => Result(UpdateInstance(args)),
             "list_files" => Result(ListFiles(args)),
             "read_file" => Result(await ReadFileAsync(args, cancellationToken)),
@@ -277,6 +291,17 @@ public sealed class MslxToolService(
         var sent = console.SendCommand(id, command, true);
         AccessibleServer(id);
         return new { instanceId = id, sent };
+    }
+
+    private async Task<ToolExecutionResult> ExecuteNodeCommandAsync(JsonElement args, CancellationToken cancellationToken)
+    {
+        var result = await nodeCommands.ExecuteAsync(RequiredString(args, "nodeId", 100), new NodeCommandRequest
+        {
+            Command = RequiredString(args, "command", 4096),
+            WorkingDirectory = OptionalString(args, "workingDirectory", 2048),
+            TimeoutSeconds = OptionalInt(args, "timeoutSeconds", 30, 1, 120)
+        }, hostRequest, cancellationToken);
+        return new ToolExecutionResult { Value = result, Ok = result.ExitCode == 0 && !result.TimedOut };
     }
 
     private object UpdateInstance(JsonElement args)

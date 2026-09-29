@@ -28,6 +28,15 @@ export interface ChatMessage {
   ok?: boolean;
   pending?: boolean;
   diff?: FileDiff;
+  commandResult?: {
+    nodeId: string;
+    workingDirectory: string;
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+    timedOut: boolean;
+    truncated: boolean;
+  };
   approval?: ToolApproval;
   question?: ToolQuestion;
   reasoning?: string;
