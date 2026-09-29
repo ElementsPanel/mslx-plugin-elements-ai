@@ -1,11 +1,30 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using MSLX.Plugin.ElementsAI;
 using MSLX.Plugin.ElementsAI.Models;
 using MSLX.Plugin.ElementsAI.Services;
 
 var tests = new List<(string Name, Func<Task> Run)>
 {
+    ("plugin registration works with host-forwarded singleton services", () =>
+    {
+        var rootServices = new ServiceCollection();
+        rootServices.AddHttpClient();
+        using var root = rootServices.BuildServiceProvider();
+        var pluginServices = new ServiceCollection();
+        foreach (var descriptor in rootServices)
+        {
+            if (descriptor.Lifetime == ServiceLifetime.Singleton && !descriptor.ServiceType.IsGenericTypeDefinition)
+                pluginServices.AddSingleton(descriptor.ServiceType, _ => root.GetService(descriptor.ServiceType)!);
+            else ((ICollection<ServiceDescriptor>)pluginServices).Add(descriptor);
+        }
+        new MSLXPluginEntry().OnRegisterServices(pluginServices);
+        using var plugin = pluginServices.BuildServiceProvider();
+        _ = plugin.GetRequiredService<NodeCommandService>();
+        return Task.CompletedTask;
+    }),
     ("stdout, stderr and nonzero exit code", async () =>
     {
         var result = await NodeCommandService.ExecuteLocalAsync(new()
@@ -53,7 +72,7 @@ var tests = new List<(string Name, Func<Task> Run)>
             Check(body!.Command == "echo test" && body.TimeoutSeconds == 4 && body.WorkingDirectory == "/tmp", "command payload changed");
             return Packet(new NodeCommandResult { WorkingDirectory = "/tmp", Stdout = "test", ExitCode = 3 });
         });
-        var service = new NodeCommandService(factory);
+        using var service = new NodeCommandService(factory.CreateClient());
         var host = new MslxHostRequestContext("http://master.test", "test-token", "stale-node");
         var nodes = await service.ListNodesAsync(host, default);
         Check(nodes.Count == 2 && nodes[0].Local && nodes[1].NodeId == "worker-1", "discovery incorrect");
@@ -69,7 +88,8 @@ var tests = new List<(string Name, Func<Task> Run)>
             Check(message.Method == HttpMethod.Get, "unknown node received command");
             return Task.FromResult(Nodes());
         });
-        await Throws<ToolException>(() => new NodeCommandService(factory).ExecuteAsync("https://unregistered.test", new() { Command = "echo test" }, Host(), default));
+        using var service = new NodeCommandService(factory.CreateClient());
+        await Throws<ToolException>(() => service.ExecuteAsync("https://unregistered.test", new() { Command = "echo test" }, Host(), default));
         Check(factory.Requests == 1, "unexpected network request");
     }),
     ("remote failures and malformed results are not retried or reported successful", async () =>
@@ -79,7 +99,8 @@ var tests = new List<(string Name, Func<Task> Run)>
             var factory = new FakeClients(message => Task.FromResult(message.Method == HttpMethod.Get
                 ? Nodes()
                 : status == HttpStatusCode.OK ? Packet(new { }) : new HttpResponseMessage(status)));
-            await Throws<ToolException>(() => new NodeCommandService(factory).ExecuteAsync("worker-1", new() { Command = "echo test" }, Host(), default));
+            using var service = new NodeCommandService(factory.CreateClient());
+            await Throws<ToolException>(() => service.ExecuteAsync("worker-1", new() { Command = "echo test" }, Host(), default));
             Check(factory.Requests == 2, "failed command was retried");
         }
     })
@@ -147,10 +168,10 @@ static async Task Throws<T>(Func<Task> action) where T : Exception
     throw new Exception($"Expected {typeof(T).Name}");
 }
 
-sealed class FakeClients(Func<HttpRequestMessage, Task<HttpResponseMessage>> send) : IHttpClientFactory
+sealed class FakeClients(Func<HttpRequestMessage, Task<HttpResponseMessage>> send)
 {
     public int Requests { get; private set; }
-    public HttpClient CreateClient(string name) => new(new Handler(message =>
+    public HttpClient CreateClient() => new(new Handler(message =>
     {
         Requests++;
         return send(message);

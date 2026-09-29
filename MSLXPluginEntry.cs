@@ -47,9 +47,12 @@ public sealed class MSLXPluginEntry : IPlugin
     public void OnRegisterServices(IServiceCollection services)
     {
         services.AddHttpClient();
-        services.AddHttpClient(NodeCommandService.HttpClientName, client => client.Timeout = Timeout.InfiniteTimeSpan)
-            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
-        services.AddSingleton<NodeCommandService>();
+        // MSLX forwards host singleton registrations as factories, which is
+        // incompatible with AddHttpClient(name)'s instance-backed registries.
+        services.AddSingleton(_ => new NodeCommandService(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
+        {
+            Timeout = Timeout.InfiniteTimeSpan
+        }));
         services.AddSingleton<AiDataStore>();
         services.AddSingleton<OpenAiProvider>();
         services.AddSingleton<AiChatService>();

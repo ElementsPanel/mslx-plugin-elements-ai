@@ -9,12 +9,13 @@ using MSLX.SDK;
 
 namespace MSLX.Plugin.ElementsAI.Services;
 
-public sealed class NodeCommandService(IHttpClientFactory clients)
+public sealed class NodeCommandService(HttpClient client) : IDisposable
 {
-    public const string HttpClientName = "elements-ai-node-commands";
     public const string Route = "api/plugins/mslx-plugin-elements-ai/node-command";
     private const int MaxOutputChars = 16000;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    public void Dispose() => client.Dispose();
 
     public static void RequireAdmin(string userId)
     {
@@ -197,7 +198,6 @@ public sealed class NodeCommandService(IHttpClientFactory clients)
 
     private async Task<JsonElement> SendAsync(HttpRequestMessage message, CancellationToken cancellationToken)
     {
-        using var client = clients.CreateClient(HttpClientName);
         using var response = await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
             throw new ToolException("节点接口不存在，请确认目标节点已安装并启用新版 Elements AI 插件。");
