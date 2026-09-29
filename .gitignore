@@ -361,3 +361,17 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Elements AI frontend and local tooling
+Frontend/.vite/
+Frontend/*.tsbuildinfo
+.pnpm-store/
+.vscode/
+
+# Local plugin runtime data and environment overrides
+plugin-data/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
