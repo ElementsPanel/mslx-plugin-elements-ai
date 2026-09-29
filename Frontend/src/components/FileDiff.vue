@@ -3,17 +3,16 @@ import { computed } from 'vue';
 import type { FileDiff } from '../types/ai';
 
 const props = defineProps<{ diff: FileDiff }>();
-const lines = computed(() => props.diff.patch.split('\n').map((text) => ({
+const lines = computed(() => props.diff.patch.replace(/\r?\n$/, '').split(/\r?\n/).map((text, index) => ({
   text,
-  type: text.startsWith('+') && !text.startsWith('+++') ? 'add' : text.startsWith('-') && !text.startsWith('---') ? 'remove' : 'context',
+  type: index < 2 ? 'context' : text.startsWith('+') ? 'add' : text.startsWith('-') ? 'remove' : 'context',
 })));
 </script>
 
 <template>
-  <details class="file-diff">
-    <summary>{{ diff.path }}<span v-if="diff.truncated">（已截断）</span></summary>
-    <pre><code><span v-for="(line, index) in lines" :key="index" :class="`diff-${line.type}`">{{ line.text }}
-</span></code></pre>
+  <details class="file-diff" open>
+    <summary>文件差异 · {{ diff.path }}<span v-if="diff.truncated">（已截断）</span></summary>
+    <pre><code><span v-for="(line, index) in lines" :key="index" :class="`diff-${line.type}`">{{ line.text }}</span></code></pre>
   </details>
 </template>
 

@@ -42,7 +42,7 @@ public sealed class MslxToolService(
 {
     private const int MaxTextBytes = 64 * 1024;
     private const string MslApiBase = "https://api.mslmc.cn";
-    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.9";
+    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.10";
     private readonly Dictionary<string, string> _fileReads = new(StringComparer.Ordinal);
 
     public static readonly HashSet<string> SensitiveTools =
@@ -193,7 +193,7 @@ public sealed class MslxToolService(
             "list_files" => Result(ListFiles(args)),
             "read_file" => Result(await ReadFileAsync(args, cancellationToken)),
             "edit_file" => await EditFileAsync(args, cancellationToken),
-            "create_file" => Result(await CreateFileAsync(args, cancellationToken)),
+            "create_file" => await CreateFileAsync(args, cancellationToken),
             "delete_file" => Result(DeleteFile(args)),
             "search_resources" => Result(await SearchResourcesAsync(args)),
             "list_resource_versions" => Result(await ListResourceVersionsAsync(args)),
@@ -417,7 +417,7 @@ public sealed class MslxToolService(
         };
     }
 
-    private async Task<object> CreateFileAsync(JsonElement args, CancellationToken cancellationToken)
+    private async Task<ToolExecutionResult> CreateFileAsync(JsonElement args, CancellationToken cancellationToken)
     {
         var id = InstanceId(args);
         var path = RequiredString(args, "path", 1024);
@@ -433,7 +433,11 @@ public sealed class MslxToolService(
         await using var stream = new FileStream(file, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, true);
         await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
         await writer.WriteAsync(content.AsMemory(), cancellationToken);
-        return new { instanceId = id, path = NormalizeRelative(path), created = true, sha256 = Hash(content) };
+        return new ToolExecutionResult
+        {
+            Value = new { instanceId = id, path = NormalizeRelative(path), created = true, sha256 = Hash(content) },
+            Diff = Diff(path, null, content)
+        };
     }
 
     private object DeleteFile(JsonElement args)
@@ -855,11 +859,12 @@ public sealed class MslxToolService(
         if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0) throw new ToolException("文件工具不允许访问符号链接。");
     }
 
-    private static FileDiff Diff(string path, string before, string after)
+    private static FileDiff Diff(string path, string? before, string after)
     {
-        var oldLines = before.Replace("\r\n", "\n").Split('\n');
-        var newLines = after.Replace("\r\n", "\n").Split('\n');
-        var builder = new StringBuilder().AppendLine($"--- a/{NormalizeRelative(path)}").AppendLine($"+++ b/{NormalizeRelative(path)}");
+        var oldLines = string.IsNullOrEmpty(before) ? [] : before.Replace("\r\n", "\n").Split('\n');
+        var newLines = after.Length == 0 ? [] : after.Replace("\r\n", "\n").Split('\n');
+        var builder = new StringBuilder().AppendLine(before is null ? "--- /dev/null" : $"--- a/{NormalizeRelative(path)}")
+            .AppendLine($"+++ b/{NormalizeRelative(path)}");
         var max = Math.Max(oldLines.Length, newLines.Length);
         for (var index = 0; index < max; index++)
         {
