@@ -1,32 +1,225 @@
-(function(){"use strict";try{if(typeof document<"u"){var e=document.createElement("style");e.appendChild(document.createTextNode(".file-diff[data-v-211ce45d]{margin-top:.65rem;border:1px solid var(--td-component-border);border-radius:10px;overflow:hidden}.file-diff summary[data-v-211ce45d]{cursor:pointer;padding:.55rem .7rem;font-size:12px;font-weight:600;background:var(--td-bg-color-secondarycontainer)}.file-diff pre[data-v-211ce45d]{max-height:320px;overflow:auto;margin:0;padding:.65rem;background:#151922;color:#d7dce5;font-size:12px}.file-diff code span[data-v-211ce45d]{display:block;min-height:1.35em}.diff-add[data-v-211ce45d]{background:#2ea04338;color:#aff5b4}.diff-remove[data-v-211ce45d]{background:#f8514933;color:#ffdcd7}.block[data-v-211ce45d]{display:block}.hidden[data-v-211ce45d]{display:none}.border[data-v-211ce45d]{border-width:1px}.markdown-message[data-v-a575bfbb]{line-height:1.72;overflow-wrap:anywhere}.markdown-message[data-v-a575bfbb] p{margin:0 0 .45rem}.markdown-message[data-v-a575bfbb] p:last-child{margin-bottom:0}.markdown-message[data-v-a575bfbb] h1,.markdown-message[data-v-a575bfbb] h2,.markdown-message[data-v-a575bfbb] h3{margin:.8rem 0 .35rem;line-height:1.3}.markdown-message[data-v-a575bfbb] h1{font-size:1.2rem}.markdown-message[data-v-a575bfbb] h2{font-size:1.08rem}.markdown-message[data-v-a575bfbb] h3{font-size:1rem}.markdown-message[data-v-a575bfbb] ul{margin:.35rem 0;padding-left:1.35rem}.markdown-message[data-v-a575bfbb] code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--td-bg-color-secondarycontainer);padding:.12rem .32rem;border-radius:5px}.markdown-message[data-v-a575bfbb] pre{overflow:auto;margin:.55rem 0;padding:.8rem;border-radius:10px;background:#151922;color:#e5e7eb}.markdown-message[data-v-a575bfbb] pre code{padding:0;background:transparent;white-space:pre}.markdown-message[data-v-a575bfbb] blockquote{margin:.5rem 0;padding-left:.75rem;border-left:3px solid var(--td-brand-color);color:var(--td-text-color-secondary)}.markdown-message[data-v-a575bfbb] .md-gap{height:.45rem}.block[data-v-a575bfbb]{display:block}.ai-workspace[data-v-b7b8845e]{display:flex;flex-direction:column;min-height:620px;height:calc(100vh - 132px);color:var(--td-text-color-primary);background:var(--td-bg-color-container);border:1px solid var(--td-component-border);border-radius:18px;overflow:hidden;box-shadow:var(--td-shadow-1)}.ai-workspace.compact[data-v-b7b8845e]{min-height:520px;height:76vh;border:0;box-shadow:none}.ai-header[data-v-b7b8845e]{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;border-bottom:1px solid var(--td-component-border);background:linear-gradient(135deg,color-mix(in srgb,var(--td-brand-color) 10%,var(--td-bg-color-container)),var(--td-bg-color-container))}.ai-title-row[data-v-b7b8845e]{display:flex;align-items:center;gap:.65rem}.ai-header h1[data-v-b7b8845e]{margin:0;font-size:1.2rem}.ai-header p[data-v-b7b8845e]{margin:.3rem 0 0;color:var(--td-text-color-secondary);font-size:12px}.instance-badge[data-v-b7b8845e]{padding:.18rem .48rem;border-radius:999px;color:var(--td-brand-color);background:color-mix(in srgb,var(--td-brand-color) 12%,transparent);font-size:11px;font-weight:600}.header-actions[data-v-b7b8845e],.inline-actions[data-v-b7b8845e]{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}.message-list[data-v-b7b8845e]{flex:1;overflow-y:auto;padding:1.2rem clamp(.8rem,3vw,3rem);background:color-mix(in srgb,var(--td-bg-color-page) 55%,var(--td-bg-color-container))}.empty-state[data-v-b7b8845e]{min-height:100%;display:grid;place-content:center;justify-items:center;text-align:center;color:var(--td-text-color-secondary)}.empty-state h2[data-v-b7b8845e]{margin:.4rem 0;color:var(--td-text-color-primary)}.empty-state p[data-v-b7b8845e]{max-width:560px;margin:0;line-height:1.7}.empty-mark[data-v-b7b8845e]{display:grid;place-content:center;width:62px;height:62px;border-radius:20px;background:color-mix(in srgb,var(--td-brand-color) 13%,transparent);color:var(--td-brand-color);font-size:30px}.context-hint[data-v-b7b8845e]{margin-top:1rem;padding:.45rem .7rem;border:1px solid var(--td-component-border);border-radius:999px;font-size:12px}.message-row[data-v-b7b8845e]{display:flex;margin:.8rem 0}.message-row.user[data-v-b7b8845e]{justify-content:flex-end}.message-bubble[data-v-b7b8845e]{max-width:min(780px,86%);border-radius:14px;padding:.75rem .9rem}.user-bubble[data-v-b7b8845e]{white-space:pre-wrap;color:var(--td-text-color-anti);background:var(--td-brand-color);border-bottom-right-radius:5px}.assistant-bubble[data-v-b7b8845e]{background:var(--td-bg-color-container);border:1px solid var(--td-component-border);border-bottom-left-radius:5px}.reasoning[data-v-b7b8845e]{margin-bottom:.7rem;color:var(--td-text-color-secondary);font-size:12px}.reasoning summary[data-v-b7b8845e]{cursor:pointer;font-weight:600}.reasoning pre[data-v-b7b8845e]{white-space:pre-wrap;max-height:220px;overflow:auto;margin:.45rem 0 0;padding:.55rem;background:var(--td-bg-color-secondarycontainer);border-radius:8px}.typing[data-v-b7b8845e]{display:flex;gap:4px;padding:.35rem}.typing span[data-v-b7b8845e]{width:7px;height:7px;border-radius:50%;background:var(--td-brand-color);animation:pulse-b7b8845e 1s infinite alternate}.typing span[data-v-b7b8845e]:nth-child(2){animation-delay:.2s}.typing span[data-v-b7b8845e]:nth-child(3){animation-delay:.4s}@keyframes pulse-b7b8845e{to{opacity:.25;transform:translateY(-3px)}}.tool-card[data-v-b7b8845e]{width:min(780px,90%);padding:.72rem .8rem;border:1px solid var(--td-component-border);border-radius:12px;background:var(--td-bg-color-container)}.tool-card.failed[data-v-b7b8845e]{border-color:color-mix(in srgb,var(--td-error-color) 45%,var(--td-component-border))}.tool-title[data-v-b7b8845e]{display:flex;align-items:center;gap:.45rem}.tool-title small[data-v-b7b8845e]{margin-left:auto;color:var(--td-text-color-placeholder)}.approval-box[data-v-b7b8845e],.question-box[data-v-b7b8845e]{margin-top:.65rem;padding:.7rem;border-radius:10px;background:var(--td-bg-color-secondarycontainer)}.approval-box p[data-v-b7b8845e],.question-box p[data-v-b7b8845e]{margin:0 0 .55rem;font-weight:600}.approval-box pre[data-v-b7b8845e],.tool-receipt pre[data-v-b7b8845e]{overflow:auto;max-height:240px;white-space:pre-wrap;margin:0 0 .65rem;padding:.6rem;border-radius:8px;color:#e5e7eb;background:#151922}.option-list[data-v-b7b8845e]{display:flex;flex-wrap:wrap;gap:.45rem}.custom-answer[data-v-b7b8845e]{display:flex;gap:.5rem;margin-top:.55rem}.custom-answer input[data-v-b7b8845e]{flex:1}.tool-receipt[data-v-b7b8845e]{margin-top:.5rem;font-size:12px}.tool-receipt summary[data-v-b7b8845e]{cursor:pointer;color:var(--td-text-color-secondary)}.error-bubble[data-v-b7b8845e],.error-strip[data-v-b7b8845e]{color:var(--td-error-color);background:color-mix(in srgb,var(--td-error-color) 9%,var(--td-bg-color-container));border:1px solid color-mix(in srgb,var(--td-error-color) 28%,transparent)}.error-bubble[data-v-b7b8845e]{max-width:min(780px,90%);padding:.7rem .8rem;border-radius:12px}.activity-strip[data-v-b7b8845e],.error-strip[data-v-b7b8845e]{padding:.45rem 1.25rem;font-size:12px}.activity-strip[data-v-b7b8845e]{display:flex;justify-content:space-between;color:var(--td-brand-color);border-top:1px solid var(--td-component-border)}.composer[data-v-b7b8845e]{padding:.75rem 1rem 1rem;border-top:1px solid var(--td-component-border);background:var(--td-bg-color-container)}.composer-controls[data-v-b7b8845e]{display:flex;gap:.75rem;margin-bottom:.55rem}.composer-controls label[data-v-b7b8845e]{display:flex;align-items:center;gap:.4rem;font-size:12px;color:var(--td-text-color-secondary)}.composer-controls .model-select[data-v-b7b8845e]{flex:1}.composer-controls select[data-v-b7b8845e]{min-width:130px}.model-select select[data-v-b7b8845e]{width:min(420px,100%)}.input-shell[data-v-b7b8845e]{border:1px solid var(--td-component-border);border-radius:13px;overflow:hidden;transition:border-color .2s}.input-shell[data-v-b7b8845e]:focus-within{border-color:var(--td-brand-color)}.input-shell textarea[data-v-b7b8845e]{width:100%;box-sizing:border-box;resize:none;border:0;outline:0;padding:.75rem;color:var(--td-text-color-primary);background:transparent;font:inherit}.input-footer[data-v-b7b8845e]{display:flex;align-items:center;justify-content:space-between;padding:.4rem .55rem .5rem;color:var(--td-text-color-placeholder);font-size:11px}.panel-view[data-v-b7b8845e]{flex:1;overflow-y:auto;padding:1.2rem;background:var(--td-bg-color-page)}.panel-heading[data-v-b7b8845e],.section-heading[data-v-b7b8845e],.settings-card[data-v-b7b8845e],.model-card[data-v-b7b8845e]{display:flex;justify-content:space-between;align-items:center;gap:1rem}.panel-heading[data-v-b7b8845e]{padding-bottom:1rem;border-bottom:1px solid var(--td-component-border)}.panel-heading h2[data-v-b7b8845e],.section-heading h3[data-v-b7b8845e],.settings-card h3[data-v-b7b8845e]{margin:0}.panel-heading p[data-v-b7b8845e],.section-heading p[data-v-b7b8845e],.settings-card p[data-v-b7b8845e]{margin:.25rem 0 0;color:var(--td-text-color-secondary);font-size:12px}.history-list[data-v-b7b8845e],.model-grid[data-v-b7b8845e]{display:grid;gap:.65rem;margin-top:1rem}.history-item[data-v-b7b8845e]{display:flex;align-items:center;gap:.7rem;padding:.75rem;border:1px solid var(--td-component-border);border-radius:12px;background:var(--td-bg-color-container)}.history-item button[data-v-b7b8845e]{display:grid;flex:1;gap:.25rem;text-align:left;border:0;color:inherit;background:transparent;cursor:pointer}.history-item button span[data-v-b7b8845e]{color:var(--td-text-color-secondary);font-size:12px}.settings-card[data-v-b7b8845e],.model-section[data-v-b7b8845e]{margin-top:1rem;padding:1rem;border:1px solid var(--td-component-border);border-radius:14px;background:var(--td-bg-color-container)}.settings-action[data-v-b7b8845e]{display:flex;align-items:center;gap:.65rem}.model-section[data-v-b7b8845e]{display:block}.model-card[data-v-b7b8845e]{padding:.75rem;border:1px solid var(--td-component-border);border-radius:11px}.model-card>div[data-v-b7b8845e]:first-child{display:grid;gap:.2rem}.model-card span[data-v-b7b8845e],.model-card small[data-v-b7b8845e]{color:var(--td-text-color-secondary)}.model-card small[data-v-b7b8845e]{overflow-wrap:anywhere}.muted-box[data-v-b7b8845e],.center-state[data-v-b7b8845e]{display:flex;align-items:center;justify-content:center;gap:.5rem;min-height:100px;color:var(--td-text-color-secondary)}.muted-box[data-v-b7b8845e]{min-height:auto;margin-top:.8rem;padding:1rem;border-radius:10px;background:var(--td-bg-color-secondarycontainer)}.model-form[data-v-b7b8845e]{display:grid;gap:.8rem}.model-form label[data-v-b7b8845e]{display:grid;gap:.3rem;font-size:13px}.model-form label>span[data-v-b7b8845e]{font-weight:600}.model-form input[data-v-b7b8845e],.model-form select[data-v-b7b8845e],.custom-answer input[data-v-b7b8845e],.composer-controls select[data-v-b7b8845e]{box-sizing:border-box;min-height:34px;padding:.42rem .55rem;border:1px solid var(--td-component-border);border-radius:7px;outline:0;color:var(--td-text-color-primary);background:var(--td-bg-color-container)}.model-form input[data-v-b7b8845e]:focus,.model-form select[data-v-b7b8845e]:focus,.custom-answer input[data-v-b7b8845e]:focus,.composer-controls select[data-v-b7b8845e]:focus{border-color:var(--td-brand-color)}.model-form .check-line[data-v-b7b8845e]{display:flex;grid-template-columns:auto 1fr;align-items:center;justify-content:start}.check-line input[data-v-b7b8845e]{min-height:auto}.form-grid[data-v-b7b8845e]{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.dialog-actions[data-v-b7b8845e]{display:flex;justify-content:flex-end;gap:.6rem;margin-top:.3rem}@media(max-width:720px){.ai-workspace[data-v-b7b8845e]{height:calc(100vh - 100px);min-height:520px}.ai-header[data-v-b7b8845e]{align-items:flex-start}.header-actions[data-v-b7b8845e]{justify-content:flex-end}.message-bubble[data-v-b7b8845e],.tool-card[data-v-b7b8845e]{max-width:96%;width:auto}.composer-controls[data-v-b7b8845e]{align-items:stretch;flex-direction:column}.composer-controls label[data-v-b7b8845e]{justify-content:space-between}.composer-controls select[data-v-b7b8845e],.model-select select[data-v-b7b8845e]{width:68%}.panel-heading[data-v-b7b8845e],.section-heading[data-v-b7b8845e],.settings-card[data-v-b7b8845e],.model-card[data-v-b7b8845e]{align-items:flex-start;flex-direction:column}.form-grid[data-v-b7b8845e]{grid-template-columns:1fr}}.grid[data-v-b7b8845e]{display:grid}.block[data-v-b7b8845e]{display:block}.hidden[data-v-b7b8845e]{display:none}.h1[data-v-b7b8845e]{height:.25rem}.h2[data-v-b7b8845e]{height:.5rem}.h3[data-v-b7b8845e]{height:.75rem}.flex[data-v-b7b8845e]{display:flex}.flex-wrap[data-v-b7b8845e]{flex-wrap:wrap}.transform[data-v-b7b8845e]{transform:translate(var(--un-translate-x)) translateY(var(--un-translate-y)) translateZ(var(--un-translate-z)) rotate(var(--un-rotate)) rotateX(var(--un-rotate-x)) rotateY(var(--un-rotate-y)) rotate(var(--un-rotate-z)) skew(var(--un-skew-x)) skewY(var(--un-skew-y)) scaleX(var(--un-scale-x)) scaleY(var(--un-scale-y)) scaleZ(var(--un-scale-z))}.resize[data-v-b7b8845e]{resize:both}.border[data-v-b7b8845e]{border-width:1px}.outline[data-v-b7b8845e]{outline-style:solid}.transition[data-v-b7b8845e]{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}@keyframes t-spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.t-icon{display:inline-block;vertical-align:middle;width:1em;height:1em}.t-icon:before{font-family:unset}.t-icon-loading{animation:t-spin 1s linear infinite}.t-icon.t-size-s,i.t-size-s{font-size:14px}.t-icon.t-size-m,i.t-size-m{font-size:16px}.t-icon.t-size-l,i.t-size-l{font-size:18px}.instance-ai-sidebar[data-v-75b8d0fa]{height:100%;min-height:0}.instance-ai-sidebar[data-v-75b8d0fa] .ai-workspace{height:100%;min-height:0;border-radius:0}.elements-ai-drawer .t-drawer__body{padding:0;overflow:hidden}.elements-ai-header-button{flex:0 0 auto}.visible[data-v-75b8d0fa]{visibility:visible}.hidden[data-v-75b8d0fa]{display:none}.flex[data-v-75b8d0fa]{display:flex}")),document.head.appendChild(e)}}catch(a){console.error("vite-plugin-css-injected-by-js",a)}})();
-function Pe(t) {
+(function(){"use strict";try{if(typeof document<"u"){var e=document.createElement("style");e.appendChild(document.createTextNode("@keyframes t-spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.t-icon{display:inline-block;vertical-align:middle;width:1em;height:1em}.t-icon:before{font-family:unset}.t-icon-loading{animation:t-spin 1s linear infinite}.t-icon.t-size-s,i.t-size-s{font-size:14px}.t-icon.t-size-m,i.t-size-m{font-size:16px}.t-icon.t-size-l,i.t-size-l{font-size:18px}.file-diff[data-v-211ce45d]{margin-top:.65rem;border:1px solid var(--td-component-border);border-radius:10px;overflow:hidden}.file-diff summary[data-v-211ce45d]{cursor:pointer;padding:.55rem .7rem;font-size:12px;font-weight:600;background:var(--td-bg-color-secondarycontainer)}.file-diff pre[data-v-211ce45d]{max-height:320px;overflow:auto;margin:0;padding:.65rem;background:#151922;color:#d7dce5;font-size:12px}.file-diff code span[data-v-211ce45d]{display:block;min-height:1.35em}.diff-add[data-v-211ce45d]{background:#2ea04338;color:#aff5b4}.diff-remove[data-v-211ce45d]{background:#f8514933;color:#ffdcd7}.block[data-v-211ce45d]{display:block}.hidden[data-v-211ce45d]{display:none}.border[data-v-211ce45d]{border-width:1px}.markdown-message[data-v-a575bfbb]{line-height:1.72;overflow-wrap:anywhere}.markdown-message[data-v-a575bfbb] p{margin:0 0 .45rem}.markdown-message[data-v-a575bfbb] p:last-child{margin-bottom:0}.markdown-message[data-v-a575bfbb] h1,.markdown-message[data-v-a575bfbb] h2,.markdown-message[data-v-a575bfbb] h3{margin:.8rem 0 .35rem;line-height:1.3}.markdown-message[data-v-a575bfbb] h1{font-size:1.2rem}.markdown-message[data-v-a575bfbb] h2{font-size:1.08rem}.markdown-message[data-v-a575bfbb] h3{font-size:1rem}.markdown-message[data-v-a575bfbb] ul{margin:.35rem 0;padding-left:1.35rem}.markdown-message[data-v-a575bfbb] code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--td-bg-color-secondarycontainer);padding:.12rem .32rem;border-radius:5px}.markdown-message[data-v-a575bfbb] pre{overflow:auto;margin:.55rem 0;padding:.8rem;border-radius:10px;background:#151922;color:#e5e7eb}.markdown-message[data-v-a575bfbb] pre code{padding:0;background:transparent;white-space:pre}.markdown-message[data-v-a575bfbb] blockquote{margin:.5rem 0;padding-left:.75rem;border-left:3px solid var(--td-brand-color);color:var(--td-text-color-secondary)}.markdown-message[data-v-a575bfbb] .md-gap{height:.45rem}.block[data-v-a575bfbb]{display:block}.ai-workspace[data-v-b7b8845e]{display:flex;flex-direction:column;min-height:620px;height:calc(100vh - 132px);color:var(--td-text-color-primary);background:var(--td-bg-color-container);border:1px solid var(--td-component-border);border-radius:18px;overflow:hidden;box-shadow:var(--td-shadow-1)}.ai-workspace.compact[data-v-b7b8845e]{min-height:520px;height:76vh;border:0;box-shadow:none}.ai-header[data-v-b7b8845e]{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;border-bottom:1px solid var(--td-component-border);background:linear-gradient(135deg,color-mix(in srgb,var(--td-brand-color) 10%,var(--td-bg-color-container)),var(--td-bg-color-container))}.ai-title-row[data-v-b7b8845e]{display:flex;align-items:center;gap:.65rem}.ai-header h1[data-v-b7b8845e]{margin:0;font-size:1.2rem}.ai-header p[data-v-b7b8845e]{margin:.3rem 0 0;color:var(--td-text-color-secondary);font-size:12px}.instance-badge[data-v-b7b8845e]{padding:.18rem .48rem;border-radius:999px;color:var(--td-brand-color);background:color-mix(in srgb,var(--td-brand-color) 12%,transparent);font-size:11px;font-weight:600}.header-actions[data-v-b7b8845e],.inline-actions[data-v-b7b8845e]{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}.message-list[data-v-b7b8845e]{flex:1;overflow-y:auto;padding:1.2rem clamp(.8rem,3vw,3rem);background:color-mix(in srgb,var(--td-bg-color-page) 55%,var(--td-bg-color-container))}.empty-state[data-v-b7b8845e]{min-height:100%;display:grid;place-content:center;justify-items:center;text-align:center;color:var(--td-text-color-secondary)}.empty-state h2[data-v-b7b8845e]{margin:.4rem 0;color:var(--td-text-color-primary)}.empty-state p[data-v-b7b8845e]{max-width:560px;margin:0;line-height:1.7}.empty-mark[data-v-b7b8845e]{display:grid;place-content:center;width:62px;height:62px;border-radius:20px;background:color-mix(in srgb,var(--td-brand-color) 13%,transparent);color:var(--td-brand-color);font-size:30px}.context-hint[data-v-b7b8845e]{margin-top:1rem;padding:.45rem .7rem;border:1px solid var(--td-component-border);border-radius:999px;font-size:12px}.message-row[data-v-b7b8845e]{display:flex;margin:.8rem 0}.message-row.user[data-v-b7b8845e]{justify-content:flex-end}.message-bubble[data-v-b7b8845e]{max-width:min(780px,86%);border-radius:14px;padding:.75rem .9rem}.user-bubble[data-v-b7b8845e]{white-space:pre-wrap;color:var(--td-text-color-anti);background:var(--td-brand-color);border-bottom-right-radius:5px}.assistant-bubble[data-v-b7b8845e]{background:var(--td-bg-color-container);border:1px solid var(--td-component-border);border-bottom-left-radius:5px}.reasoning[data-v-b7b8845e]{margin-bottom:.7rem;color:var(--td-text-color-secondary);font-size:12px}.reasoning summary[data-v-b7b8845e]{cursor:pointer;font-weight:600}.reasoning pre[data-v-b7b8845e]{white-space:pre-wrap;max-height:220px;overflow:auto;margin:.45rem 0 0;padding:.55rem;background:var(--td-bg-color-secondarycontainer);border-radius:8px}.typing[data-v-b7b8845e]{display:flex;gap:4px;padding:.35rem}.typing span[data-v-b7b8845e]{width:7px;height:7px;border-radius:50%;background:var(--td-brand-color);animation:pulse-b7b8845e 1s infinite alternate}.typing span[data-v-b7b8845e]:nth-child(2){animation-delay:.2s}.typing span[data-v-b7b8845e]:nth-child(3){animation-delay:.4s}@keyframes pulse-b7b8845e{to{opacity:.25;transform:translateY(-3px)}}.tool-card[data-v-b7b8845e]{width:min(780px,90%);padding:.72rem .8rem;border:1px solid var(--td-component-border);border-radius:12px;background:var(--td-bg-color-container)}.tool-card.failed[data-v-b7b8845e]{border-color:color-mix(in srgb,var(--td-error-color) 45%,var(--td-component-border))}.tool-title[data-v-b7b8845e]{display:flex;align-items:center;gap:.45rem}.tool-title small[data-v-b7b8845e]{margin-left:auto;color:var(--td-text-color-placeholder)}.approval-box[data-v-b7b8845e],.question-box[data-v-b7b8845e]{margin-top:.65rem;padding:.7rem;border-radius:10px;background:var(--td-bg-color-secondarycontainer)}.approval-box p[data-v-b7b8845e],.question-box p[data-v-b7b8845e]{margin:0 0 .55rem;font-weight:600}.approval-box pre[data-v-b7b8845e],.tool-receipt pre[data-v-b7b8845e]{overflow:auto;max-height:240px;white-space:pre-wrap;margin:0 0 .65rem;padding:.6rem;border-radius:8px;color:#e5e7eb;background:#151922}.option-list[data-v-b7b8845e]{display:flex;flex-wrap:wrap;gap:.45rem}.custom-answer[data-v-b7b8845e]{display:flex;gap:.5rem;margin-top:.55rem}.custom-answer input[data-v-b7b8845e]{flex:1}.tool-receipt[data-v-b7b8845e]{margin-top:.5rem;font-size:12px}.tool-receipt summary[data-v-b7b8845e]{cursor:pointer;color:var(--td-text-color-secondary)}.error-bubble[data-v-b7b8845e],.error-strip[data-v-b7b8845e]{color:var(--td-error-color);background:color-mix(in srgb,var(--td-error-color) 9%,var(--td-bg-color-container));border:1px solid color-mix(in srgb,var(--td-error-color) 28%,transparent)}.error-bubble[data-v-b7b8845e]{max-width:min(780px,90%);padding:.7rem .8rem;border-radius:12px}.activity-strip[data-v-b7b8845e],.error-strip[data-v-b7b8845e]{padding:.45rem 1.25rem;font-size:12px}.activity-strip[data-v-b7b8845e]{display:flex;justify-content:space-between;color:var(--td-brand-color);border-top:1px solid var(--td-component-border)}.composer[data-v-b7b8845e]{padding:.75rem 1rem 1rem;border-top:1px solid var(--td-component-border);background:var(--td-bg-color-container)}.composer-controls[data-v-b7b8845e]{display:flex;gap:.75rem;margin-bottom:.55rem}.composer-controls label[data-v-b7b8845e]{display:flex;align-items:center;gap:.4rem;font-size:12px;color:var(--td-text-color-secondary)}.composer-controls .model-select[data-v-b7b8845e]{flex:1}.composer-controls select[data-v-b7b8845e]{min-width:130px}.model-select select[data-v-b7b8845e]{width:min(420px,100%)}.input-shell[data-v-b7b8845e]{border:1px solid var(--td-component-border);border-radius:13px;overflow:hidden;transition:border-color .2s}.input-shell[data-v-b7b8845e]:focus-within{border-color:var(--td-brand-color)}.input-shell textarea[data-v-b7b8845e]{width:100%;box-sizing:border-box;resize:none;border:0;outline:0;padding:.75rem;color:var(--td-text-color-primary);background:transparent;font:inherit}.input-footer[data-v-b7b8845e]{display:flex;align-items:center;justify-content:space-between;padding:.4rem .55rem .5rem;color:var(--td-text-color-placeholder);font-size:11px}.panel-view[data-v-b7b8845e]{flex:1;overflow-y:auto;padding:1.2rem;background:var(--td-bg-color-page)}.panel-heading[data-v-b7b8845e],.section-heading[data-v-b7b8845e],.settings-card[data-v-b7b8845e],.model-card[data-v-b7b8845e]{display:flex;justify-content:space-between;align-items:center;gap:1rem}.panel-heading[data-v-b7b8845e]{padding-bottom:1rem;border-bottom:1px solid var(--td-component-border)}.panel-heading h2[data-v-b7b8845e],.section-heading h3[data-v-b7b8845e],.settings-card h3[data-v-b7b8845e]{margin:0}.panel-heading p[data-v-b7b8845e],.section-heading p[data-v-b7b8845e],.settings-card p[data-v-b7b8845e]{margin:.25rem 0 0;color:var(--td-text-color-secondary);font-size:12px}.history-list[data-v-b7b8845e],.model-grid[data-v-b7b8845e]{display:grid;gap:.65rem;margin-top:1rem}.history-item[data-v-b7b8845e]{display:flex;align-items:center;gap:.7rem;padding:.75rem;border:1px solid var(--td-component-border);border-radius:12px;background:var(--td-bg-color-container)}.history-item button[data-v-b7b8845e]{display:grid;flex:1;gap:.25rem;text-align:left;border:0;color:inherit;background:transparent;cursor:pointer}.history-item button span[data-v-b7b8845e]{color:var(--td-text-color-secondary);font-size:12px}.settings-card[data-v-b7b8845e],.model-section[data-v-b7b8845e]{margin-top:1rem;padding:1rem;border:1px solid var(--td-component-border);border-radius:14px;background:var(--td-bg-color-container)}.settings-action[data-v-b7b8845e]{display:flex;align-items:center;gap:.65rem}.model-section[data-v-b7b8845e]{display:block}.model-card[data-v-b7b8845e]{padding:.75rem;border:1px solid var(--td-component-border);border-radius:11px}.model-card>div[data-v-b7b8845e]:first-child{display:grid;gap:.2rem}.model-card span[data-v-b7b8845e],.model-card small[data-v-b7b8845e]{color:var(--td-text-color-secondary)}.model-card small[data-v-b7b8845e]{overflow-wrap:anywhere}.muted-box[data-v-b7b8845e],.center-state[data-v-b7b8845e]{display:flex;align-items:center;justify-content:center;gap:.5rem;min-height:100px;color:var(--td-text-color-secondary)}.muted-box[data-v-b7b8845e]{min-height:auto;margin-top:.8rem;padding:1rem;border-radius:10px;background:var(--td-bg-color-secondarycontainer)}.model-form[data-v-b7b8845e]{display:grid;gap:.8rem}.model-form label[data-v-b7b8845e]{display:grid;gap:.3rem;font-size:13px}.model-form label>span[data-v-b7b8845e]{font-weight:600}.model-form input[data-v-b7b8845e],.model-form select[data-v-b7b8845e],.custom-answer input[data-v-b7b8845e],.composer-controls select[data-v-b7b8845e]{box-sizing:border-box;min-height:34px;padding:.42rem .55rem;border:1px solid var(--td-component-border);border-radius:7px;outline:0;color:var(--td-text-color-primary);background:var(--td-bg-color-container)}.model-form input[data-v-b7b8845e]:focus,.model-form select[data-v-b7b8845e]:focus,.custom-answer input[data-v-b7b8845e]:focus,.composer-controls select[data-v-b7b8845e]:focus{border-color:var(--td-brand-color)}.model-form .check-line[data-v-b7b8845e]{display:flex;grid-template-columns:auto 1fr;align-items:center;justify-content:start}.check-line input[data-v-b7b8845e]{min-height:auto}.form-grid[data-v-b7b8845e]{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.dialog-actions[data-v-b7b8845e]{display:flex;justify-content:flex-end;gap:.6rem;margin-top:.3rem}@media(max-width:720px){.ai-workspace[data-v-b7b8845e]{height:calc(100vh - 100px);min-height:520px}.ai-header[data-v-b7b8845e]{align-items:flex-start}.header-actions[data-v-b7b8845e]{justify-content:flex-end}.message-bubble[data-v-b7b8845e],.tool-card[data-v-b7b8845e]{max-width:96%;width:auto}.composer-controls[data-v-b7b8845e]{align-items:stretch;flex-direction:column}.composer-controls label[data-v-b7b8845e]{justify-content:space-between}.composer-controls select[data-v-b7b8845e],.model-select select[data-v-b7b8845e]{width:68%}.panel-heading[data-v-b7b8845e],.section-heading[data-v-b7b8845e],.settings-card[data-v-b7b8845e],.model-card[data-v-b7b8845e]{align-items:flex-start;flex-direction:column}.form-grid[data-v-b7b8845e]{grid-template-columns:1fr}}.grid[data-v-b7b8845e]{display:grid}.block[data-v-b7b8845e]{display:block}.hidden[data-v-b7b8845e]{display:none}.h1[data-v-b7b8845e]{height:.25rem}.h2[data-v-b7b8845e]{height:.5rem}.h3[data-v-b7b8845e]{height:.75rem}.flex[data-v-b7b8845e]{display:flex}.flex-wrap[data-v-b7b8845e]{flex-wrap:wrap}.transform[data-v-b7b8845e]{transform:translate(var(--un-translate-x)) translateY(var(--un-translate-y)) translateZ(var(--un-translate-z)) rotate(var(--un-rotate)) rotateX(var(--un-rotate-x)) rotateY(var(--un-rotate-y)) rotate(var(--un-rotate-z)) skew(var(--un-skew-x)) skewY(var(--un-skew-y)) scaleX(var(--un-scale-x)) scaleY(var(--un-scale-y)) scaleZ(var(--un-scale-z))}.resize[data-v-b7b8845e]{resize:both}.border[data-v-b7b8845e]{border-width:1px}.outline[data-v-b7b8845e]{outline-style:solid}.transition[data-v-b7b8845e]{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.instance-ai-sidebar[data-v-75b8d0fa]{height:100%;min-height:0}.instance-ai-sidebar[data-v-75b8d0fa] .ai-workspace{height:100%;min-height:0;border-radius:0}.elements-ai-drawer .t-drawer__body{padding:0;overflow:hidden}.elements-ai-header-button{flex:0 0 auto}.visible[data-v-75b8d0fa]{visibility:visible}.hidden[data-v-75b8d0fa]{display:none}.flex[data-v-75b8d0fa]{display:flex}")),document.head.appendChild(e)}}catch(a){console.error("vite-plugin-css-injected-by-js",a)}})();
+function Ie(t) {
   return t && t.__esModule && Object.prototype.hasOwnProperty.call(t, "default") ? t.default : t;
 }
 var ee, ve;
-function Oe() {
+function Pe() {
   return ve || (ve = 1, ee = Vue), ee;
 }
-var e = Oe(), te, fe;
-function qe() {
-  return fe || (fe = 1, te = TDesign), te;
+var e = Pe();
+function L(t) {
+  "@babel/helpers - typeof";
+  return L = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(a) {
+    return typeof a;
+  } : function(a) {
+    return a && typeof Symbol == "function" && a.constructor === Symbol && a !== Symbol.prototype ? "symbol" : typeof a;
+  }, L(t);
 }
-var N = qe(), le, ke;
-function ze() {
-  return ke || (ke = 1, le = mslxRequest), le;
+function qe(t, a) {
+  if (L(t) != "object" || !t) return t;
+  var i = t[Symbol.toPrimitive];
+  if (i !== void 0) {
+    var r = i.call(t, a);
+    if (L(r) != "object") return r;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return (a === "string" ? String : Number)(t);
 }
-var Le = ze();
-const B = /* @__PURE__ */ Pe(Le), C = "/api/plugins/mslx-plugin-elements-ai/ai";
-function Ue() {
+function Oe(t) {
+  var a = qe(t, "string");
+  return L(a) == "symbol" ? a : a + "";
+}
+function ze(t, a, i) {
+  return (a = Oe(a)) in t ? Object.defineProperty(t, a, {
+    value: i,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : t[a] = i, t;
+}
+var fe = (t) => {
+  var a = ["strokeLinecap", "fillRule", "clipRule", "strokeWidth"];
+  return a.includes(t) ? t.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase() : t;
+}, Ee = (t, a) => {
+  var i = {};
+  if (t.attrs)
+    for (var [r, f] of Object.entries(t.attrs))
+      if (typeof f == "string" && f.startsWith("props.")) {
+        var u = f.split(".")[1];
+        i[fe(r)] = a[u];
+      } else
+        i[fe(r)] = f;
+  t.tag === "svg" && (i.class = a.class, i.style = a.style, i.onClick = a.onClick);
+  var v = t.children ? t.children.map((g) => Ee(g, a)) : [];
+  return e.h(t.tag, i, v);
+}, Le = "t", Ue = {
+  classPrefix: Le
+};
+function je() {
+  var {
+    classPrefix: t
+  } = Ue;
+  return {
+    SIZE: {
+      default: "",
+      xs: "".concat(t, "-size-xs"),
+      small: "".concat(t, "-size-s"),
+      medium: "".concat(t, "-size-m"),
+      large: "".concat(t, "-size-l"),
+      xl: "".concat(t, "-size-xl"),
+      block: "".concat(t, "-size-full-width")
+    },
+    STATUS: {
+      loading: "".concat(t, "-is-loading"),
+      disabled: "".concat(t, "-is-disabled"),
+      focused: "".concat(t, "-is-focused"),
+      success: "".concat(t, "-is-success"),
+      error: "".concat(t, "-is-error"),
+      warning: "".concat(t, "-is-warning"),
+      selected: "".concat(t, "-is-selected"),
+      active: "".concat(t, "-is-active"),
+      checked: "".concat(t, "-is-checked"),
+      current: "".concat(t, "-is-current"),
+      hidden: "".concat(t, "-is-hidden"),
+      visible: "".concat(t, "-is-visible"),
+      expanded: "".concat(t, "-is-expanded"),
+      indeterminate: "".concat(t, "-is-indeterminate")
+    }
+  };
+}
+function Ke(t) {
+  var a = je().SIZE, i = e.computed(() => t.value in a ? a[t.value] : ""), r = e.computed(() => t.value === void 0 || t.value in a ? {} : {
+    fontSize: t.value
+  });
+  return {
+    style: r,
+    className: i
+  };
+}
+function ke(t, a) {
+  var i = Object.keys(t);
+  if (Object.getOwnPropertySymbols) {
+    var r = Object.getOwnPropertySymbols(t);
+    a && (r = r.filter(function(f) {
+      return Object.getOwnPropertyDescriptor(t, f).enumerable;
+    })), i.push.apply(i, r);
+  }
+  return i;
+}
+function ye(t) {
+  for (var a = 1; a < arguments.length; a++) {
+    var i = arguments[a] != null ? arguments[a] : {};
+    a % 2 ? ke(Object(i), !0).forEach(function(r) {
+      ze(t, r, i[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(t, Object.getOwnPropertyDescriptors(i)) : ke(Object(i)).forEach(function(r) {
+      Object.defineProperty(t, r, Object.getOwnPropertyDescriptor(i, r));
+    });
+  }
+  return t;
+}
+var Re = {
+  tag: "svg",
+  attrs: {
+    fill: "none",
+    viewBox: "0 0 24 24",
+    width: "1em",
+    height: "1em"
+  },
+  children: [{
+    tag: "g",
+    attrs: {
+      id: "chat"
+    },
+    children: [{
+      tag: "path",
+      attrs: {
+        id: "fill1",
+        fill: "props.fillColor1",
+        d: "M2.5 3H21.5V17H6.5L2.5 20.5V3Z"
+      }
+    }, {
+      tag: "path",
+      attrs: {
+        id: "stroke1",
+        stroke: "props.strokeColor1",
+        d: "M2.5 3H21.5V17H6.5L2.5 20.5V3Z",
+        strokeLinecap: "square",
+        strokeWidth: "props.strokeWidth"
+      }
+    }]
+  }]
+}, We = e.defineComponent({
+  name: "ChatIcon",
+  props: {
+    size: {
+      type: String
+    },
+    onClick: {
+      type: Function
+    },
+    fillColor: {
+      type: [Array, String]
+    },
+    strokeColor: {
+      type: [Array, String]
+    },
+    strokeWidth: {
+      type: Number
+    }
+  },
+  setup(t, a) {
+    var {
+      attrs: i
+    } = a, r = e.computed(() => t.size), f = e.computed(() => t.strokeColor ? Array.isArray(t.strokeColor) ? t.strokeColor[0] : t.strokeColor : "currentColor"), u = e.computed(() => {
+      var k;
+      return t.strokeColor ? Array.isArray(t.strokeColor) ? (k = t.strokeColor[1]) !== null && k !== void 0 ? k : t.strokeColor[0] : t.strokeColor : "currentColor";
+    }), v = e.computed(() => t.fillColor ? Array.isArray(t.fillColor) ? t.fillColor[0] : t.fillColor : "transparent"), g = e.computed(() => {
+      var k;
+      return t.fillColor ? Array.isArray(t.fillColor) ? (k = t.fillColor[1]) !== null && k !== void 0 ? k : t.fillColor[0] : t.fillColor : "transparent";
+    }), c = e.computed(() => t.fillColor ? Array.isArray(t.fillColor) ? t.fillColor[0] : t.fillColor : "currentColor"), {
+      className: m,
+      style: d
+    } = Ke(r), y = e.computed(() => ["t-icon", "t-icon-chat", m.value]), h = e.computed(() => ye(ye({
+      fill: "none"
+    }, d.value), i.style)), b = e.computed(() => ({
+      class: y.value,
+      style: h.value,
+      onClick: (k) => {
+        var E;
+        return (E = t.onClick) === null || E === void 0 ? void 0 : E.call(t, {
+          e: k
+        });
+      },
+      strokeColor1: f.value,
+      strokeColor2: u.value,
+      fillColor1: v.value,
+      fillColor2: g.value,
+      strokeWidth: t.strokeWidth || 2,
+      filledColor: c.value
+    }));
+    return () => Ee(Re, b.value);
+  }
+}), te, he;
+function Fe() {
+  return he || (he = 1, te = TDesign), te;
+}
+var N = Fe(), le, ge;
+function He() {
+  return ge || (ge = 1, le = mslxRequest), le;
+}
+var Xe = He();
+const B = /* @__PURE__ */ Ie(Xe), C = "/api/plugins/mslx-plugin-elements-ai/ai";
+function Ze() {
   const t = window.MSLX_Stores;
   return t?.getUserStore?.() || t?.useUserStore?.();
 }
-function je() {
-  const t = Ue()?.token;
+function Je() {
+  const t = Ze()?.token;
   if (!t) throw new Error("登录状态已失效，请重新登录。");
   return t;
 }
-const Ke = () => B.get({ url: `${C}/status` }), Re = (t) => B.put({ url: `${C}/preferences`, data: t }), We = (t) => B.put({ url: `${C}/models`, data: t }), Fe = (t) => B.delete({ url: `${C}/models/${encodeURIComponent(t)}` }), ne = () => B.get({ url: `${C}/presets` }), He = (t) => B.put({ url: `${C}/presets`, data: t }), Xe = (t) => B.delete({ url: `${C}/presets/${encodeURIComponent(t)}` }), Ze = () => B.get({ url: `${C}/conversations` }), Je = (t) => B.get({ url: `${C}/conversations/${encodeURIComponent(t)}` }), Qe = (t) => B.delete({ url: `${C}/conversations`, data: { ids: t } }), Ge = (t, a) => B.post({ url: `${C}/approvals/${encodeURIComponent(t)}`, data: { approved: a } }), Ye = (t, a) => B.post({ url: `${C}/questions/${encodeURIComponent(t)}`, data: { answer: a } });
-async function et(t, a, r, i, f, u, v) {
+const Qe = () => B.get({ url: `${C}/status` }), Ge = (t) => B.put({ url: `${C}/preferences`, data: t }), Ye = (t) => B.put({ url: `${C}/models`, data: t }), et = (t) => B.delete({ url: `${C}/models/${encodeURIComponent(t)}` }), ne = () => B.get({ url: `${C}/presets` }), tt = (t) => B.put({ url: `${C}/presets`, data: t }), lt = (t) => B.delete({ url: `${C}/presets/${encodeURIComponent(t)}` }), nt = () => B.get({ url: `${C}/conversations` }), ot = (t) => B.get({ url: `${C}/conversations/${encodeURIComponent(t)}` }), at = (t) => B.delete({ url: `${C}/conversations`, data: { ids: t } }), rt = (t, a) => B.post({ url: `${C}/approvals/${encodeURIComponent(t)}`, data: { approved: a } }), it = (t, a) => B.post({ url: `${C}/questions/${encodeURIComponent(t)}`, data: { answer: a } });
+async function ct(t, a, i, r, f, u, v) {
   const g = await fetch(`${C}/chat`, {
     method: "POST",
     credentials: "same-origin",
@@ -34,9 +227,9 @@ async function et(t, a, r, i, f, u, v) {
     headers: {
       "Content-Type": "application/json",
       "X-Requested-With": "XMLHttpRequest",
-      Authorization: `Bearer ${je()}`
+      Authorization: `Bearer ${Je()}`
     },
-    body: JSON.stringify({ message: t, conversationId: a, modelId: r, permissionMode: i, currentInstanceId: f })
+    body: JSON.stringify({ message: t, conversationId: a, modelId: i, permissionMode: r, currentInstanceId: f })
   });
   if (!g.ok) {
     const b = await g.json().catch(() => ({}));
@@ -71,25 +264,25 @@ async function et(t, a, r, i, f, u, v) {
     }), c.releaseLock();
   }
 }
-const tt = /* @__PURE__ */ e.defineComponent({
+const st = /* @__PURE__ */ e.defineComponent({
   __name: "FileDiff",
   props: {
     diff: {}
   },
   setup(t) {
-    const a = t, r = e.computed(() => a.diff.patch.split(`
-`).map((i) => ({
-      text: i,
-      type: i.startsWith("+") && !i.startsWith("+++") ? "add" : i.startsWith("-") && !i.startsWith("---") ? "remove" : "context"
+    const a = t, i = e.computed(() => a.diff.patch.split(`
+`).map((r) => ({
+      text: r,
+      type: r.startsWith("+") && !r.startsWith("+++") ? "add" : r.startsWith("-") && !r.startsWith("---") ? "remove" : "context"
     })));
-    return (i, f) => (e.openBlock(), e.createElementBlock("details", { class: "file-diff" }, [
+    return (r, f) => (e.openBlock(), e.createElementBlock("details", { class: "file-diff" }, [
       e.createElementVNode("summary", null, [
         e.createTextVNode(e.toDisplayString(t.diff.path), 1),
         t.diff.truncated ? (e.openBlock(), e.createElementBlock("span", { key: 0 }, "（已截断）")) : e.createCommentVNode("", !0)
       ]),
       e.createElementVNode("pre", null, [
         e.createElementVNode("code", null, [
-          (e.openBlock(!0), e.createElementBlock(e.Fragment, null, e.renderList(r.value, (u, v) => (e.openBlock(), e.createElementBlock("span", {
+          (e.openBlock(!0), e.createElementBlock(e.Fragment, null, e.renderList(i.value, (u, v) => (e.openBlock(), e.createElementBlock("span", {
             key: v,
             class: e.normalizeClass(`diff-${u.type}`)
           }, e.toDisplayString(u.text) + `
@@ -99,29 +292,29 @@ const tt = /* @__PURE__ */ e.defineComponent({
     ]));
   }
 }), R = (t, a) => {
-  const r = t.__vccOpts || t;
-  for (const [i, f] of a)
-    r[i] = f;
-  return r;
-}, lt = /* @__PURE__ */ R(tt, [["__scopeId", "data-v-211ce45d"]]), nt = /* @__PURE__ */ e.defineComponent({
+  const i = t.__vccOpts || t;
+  for (const [r, f] of a)
+    i[r] = f;
+  return i;
+}, ut = /* @__PURE__ */ R(st, [["__scopeId", "data-v-211ce45d"]]), dt = /* @__PURE__ */ e.defineComponent({
   __name: "MarkdownMessage",
   props: {
     content: {}
   },
   setup(t) {
     const a = t;
-    function r(u) {
+    function i(u) {
       return u.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
     }
-    function i(u) {
+    function r(u) {
       return u.replace(/`([^`\n]+)`/g, "<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(new RegExp("(?<!\\*)\\*([^*\\n]+)\\*(?!\\*)", "g"), "<em>$1</em>");
     }
     const f = e.computed(() => {
       const u = [];
       let v = a.content.replace(/```([^\n`]*)\n([\s\S]*?)```/g, (d, y, h) => `@@ELEMENTS_AI_BLOCK_${u.push(
-        `<pre><code data-language="${r(String(y).trim())}">${r(String(h))}</code></pre>`
+        `<pre><code data-language="${i(String(y).trim())}">${i(String(h))}</code></pre>`
       ) - 1}@@`);
-      v = r(v);
+      v = i(v);
       const g = v.split(/\r?\n/), c = [];
       let m = !1;
       for (const d of g) {
@@ -132,10 +325,10 @@ const tt = /* @__PURE__ */ e.defineComponent({
         }
         const h = /^\s*[-*]\s+(.+)$/.exec(d);
         if (h) {
-          m || c.push("<ul>"), m = !0, c.push(`<li>${i(h[1])}</li>`);
+          m || c.push("<ul>"), m = !0, c.push(`<li>${r(h[1])}</li>`);
           continue;
         }
-        m && c.push("</ul>"), m = !1, d.trim() ? d.startsWith("### ") ? c.push(`<h3>${i(d.slice(4))}</h3>`) : d.startsWith("## ") ? c.push(`<h2>${i(d.slice(3))}</h2>`) : d.startsWith("# ") ? c.push(`<h1>${i(d.slice(2))}</h1>`) : d.startsWith("&gt; ") ? c.push(`<blockquote>${i(d.slice(5))}</blockquote>`) : c.push(`<p>${i(d)}</p>`) : c.push('<div class="md-gap"></div>');
+        m && c.push("</ul>"), m = !1, d.trim() ? d.startsWith("### ") ? c.push(`<h3>${r(d.slice(4))}</h3>`) : d.startsWith("## ") ? c.push(`<h2>${r(d.slice(3))}</h2>`) : d.startsWith("# ") ? c.push(`<h1>${r(d.slice(2))}</h1>`) : d.startsWith("&gt; ") ? c.push(`<blockquote>${r(d.slice(5))}</blockquote>`) : c.push(`<p>${r(d)}</p>`) : c.push('<div class="md-gap"></div>');
       }
       return m && c.push("</ul>"), c.join("");
     });
@@ -144,16 +337,16 @@ const tt = /* @__PURE__ */ e.defineComponent({
       innerHTML: f.value
     }, null, 8, ["innerHTML"]));
   }
-}), ot = /* @__PURE__ */ R(nt, [["__scopeId", "data-v-a575bfbb"]]), at = /* @__PURE__ */ e.defineComponent({
+}), mt = /* @__PURE__ */ R(dt, [["__scopeId", "data-v-a575bfbb"]]), pt = /* @__PURE__ */ e.defineComponent({
   __name: "AiWorkspace",
   props: {
     currentInstanceId: {},
     compact: { type: Boolean, default: !1 }
   },
   setup(t) {
-    const a = t, r = window.MSLX_Stores, i = r?.getUserStore?.() || r?.useUserStore?.(), f = e.computed(() => i?.token || ""), u = e.ref(), v = e.ref(""), g = e.ref("default"), c = e.ref([]), m = e.ref(), d = e.ref(!0), y = e.ref(""), h = e.ref(!1), b = e.ref(!1), k = e.ref(""), E = e.ref(""), w = e.ref(""), V = e.ref("chat"), U = e.ref(), D = e.ref(), M = e.ref(""), A = e.ref(""), W = e.reactive({}), F = e.ref([]), O = e.ref(!1), S = e.ref([]), q = e.ref([]), H = e.ref(!1), X = e.ref(!1), I = e.ref(!0), z = e.ref(!1), oe = e.ref("personal"), P = e.ref("default"), p = e.reactive(ce()), Z = e.ref(!1), J = e.computed(() => u.value?.models || []), ae = e.computed(() => J.value.filter((n) => n.source === "personal")), re = e.computed(
+    const a = t, i = window.MSLX_Stores, r = i?.getUserStore?.() || i?.useUserStore?.(), f = e.computed(() => r?.token || ""), u = e.ref(), v = e.ref(""), g = e.ref("default"), c = e.ref([]), m = e.ref(), d = e.ref(!0), y = e.ref(""), h = e.ref(!1), b = e.ref(!1), k = e.ref(""), E = e.ref(""), w = e.ref(""), V = e.ref("chat"), U = e.ref(), D = e.ref(), M = e.ref(""), A = e.ref(""), W = e.reactive({}), F = e.ref([]), q = e.ref(!1), S = e.ref([]), O = e.ref([]), H = e.ref(!1), X = e.ref(!1), I = e.ref(!0), z = e.ref(!1), oe = e.ref("personal"), P = e.ref("default"), p = e.reactive(ce()), Z = e.ref(!1), J = e.computed(() => u.value?.models || []), ae = e.computed(() => J.value.filter((n) => n.source === "personal")), re = e.computed(
       () => !!(u.value?.ready && v.value && y.value.trim() && !h.value && d.value)
-    ), Ne = e.computed(() => a.currentInstanceId ? `实例 #${a.currentInstanceId}` : "全局助手"), ie = e.computed(
+    ), Ve = e.computed(() => a.currentInstanceId ? `实例 #${a.currentInstanceId}` : "全局助手"), ie = e.computed(
       () => !!(p.name.trim() && p.endpoint.trim() && p.model.trim())
     );
     function ce() {
@@ -170,13 +363,13 @@ const tt = /* @__PURE__ */ e.defineComponent({
     function Q(n = !1) {
       D.value?.abort(), D.value = void 0, c.value = [], m.value = void 0, d.value = !0, h.value = !1, k.value = "", E.value = "", w.value = "", M.value = "", A.value = "", n && (y.value = "");
     }
-    function Ce() {
+    function Ne() {
       Q(!0), V.value = "chat";
     }
     async function j() {
       b.value = !0, k.value = "";
       try {
-        const n = await Ke();
+        const n = await Qe();
         u.value = n, I.value = n.preferences?.sendOnEnter ?? !0, n.models.some((o) => o.id === v.value) || (v.value = n.models[0]?.id || "");
       } catch (n) {
         k.value = x(n);
@@ -187,7 +380,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
     async function G() {
       await e.nextTick(), U.value && (U.value.scrollTop = U.value.scrollHeight);
     }
-    function be(n) {
+    function Ce(n) {
       if (n.type === "start")
         m.value = n.conversationId, c.value = n.messages;
       else if (n.type === "message") {
@@ -215,14 +408,14 @@ const tt = /* @__PURE__ */ e.defineComponent({
       const o = new AbortController();
       D.value = o;
       try {
-        await et(
+        await ct(
           n,
           m.value,
           v.value,
           g.value,
           a.currentInstanceId,
           o.signal,
-          be
+          Ce
         );
       } catch (s) {
         o.signal.aborted || (k.value = x(s), c.value.push({ role: "error", content: k.value }));
@@ -230,17 +423,17 @@ const tt = /* @__PURE__ */ e.defineComponent({
         D.value === o && (D.value = void 0), h.value = !1, E.value = "", w.value = "", await G();
       }
     }
-    function we() {
+    function be() {
       D.value?.abort();
     }
-    function Be(n) {
+    function we(n) {
       n.key !== "Enter" || n.isComposing || !(I.value ? !n.shiftKey : n.ctrlKey || n.metaKey) || (n.preventDefault(), se());
     }
     async function ue(n, o) {
       if (!(!n.approval || M.value)) {
         M.value = n.approval.id;
         try {
-          await Ge(n.approval.id, o);
+          await rt(n.approval.id, o);
         } catch (s) {
           N.MessagePlugin.error(x(s));
         } finally {
@@ -254,7 +447,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
       if (s) {
         A.value = n.question.id;
         try {
-          await Ye(n.question.id, s);
+          await it(n.question.id, s);
         } catch (_) {
           N.MessagePlugin.error(x(_));
         } finally {
@@ -263,30 +456,30 @@ const tt = /* @__PURE__ */ e.defineComponent({
       }
     }
     async function de() {
-      V.value = "history", O.value = !0, S.value = [];
+      V.value = "history", q.value = !0, S.value = [];
       try {
-        F.value = await Ze();
+        F.value = await nt();
       } catch (n) {
         k.value = x(n);
       } finally {
-        O.value = !1;
+        q.value = !1;
       }
     }
-    async function xe(n) {
-      O.value = !0;
+    async function Be(n) {
+      q.value = !0;
       try {
-        const o = await Je(n);
+        const o = await ot(n);
         c.value = o.messages, m.value = o.id, d.value = o.canContinue, v.value = o.canContinue ? o.modelId : "", V.value = "chat", await G();
       } catch (o) {
         N.MessagePlugin.error(x(o));
       } finally {
-        O.value = !1;
+        q.value = !1;
       }
     }
-    function Se(n, o) {
+    function xe(n, o) {
       S.value = o ? [.../* @__PURE__ */ new Set([...S.value, n])] : S.value.filter((s) => s !== n);
     }
-    function _e() {
+    function Se() {
       if (!S.value.length) return;
       const n = N.DialogPlugin.confirm({
         header: "删除对话",
@@ -296,7 +489,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
         cancelBtn: "取消",
         onConfirm: async () => {
           try {
-            await Qe(S.value), m.value && S.value.includes(m.value) && Q(), await de(), N.MessagePlugin.success("对话已删除");
+            await at(S.value), m.value && S.value.includes(m.value) && Q(), await de(), N.MessagePlugin.success("对话已删除");
           } catch (o) {
             N.MessagePlugin.error(x(o));
           } finally {
@@ -307,21 +500,21 @@ const tt = /* @__PURE__ */ e.defineComponent({
         onCancel: () => n.destroy()
       });
     }
-    async function $e() {
+    async function _e() {
       V.value = "settings", H.value = !0;
       try {
-        u.value?.admin && (q.value = await ne());
+        u.value?.admin && (O.value = await ne());
       } catch (n) {
         k.value = x(n);
       } finally {
         H.value = !1;
       }
     }
-    async function Te() {
+    async function $e() {
       if (u.value) {
         X.value = !0;
         try {
-          await Re({ sendOnEnter: I.value }), u.value.preferences.sendOnEnter = I.value, N.MessagePlugin.success("偏好已保存");
+          await Ge({ sendOnEnter: I.value }), u.value.preferences.sendOnEnter = I.value, N.MessagePlugin.success("偏好已保存");
         } catch (n) {
           N.MessagePlugin.error(x(n));
         } finally {
@@ -339,11 +532,11 @@ const tt = /* @__PURE__ */ e.defineComponent({
         thinkingEffort: o.thinkingEffort
       } : {}), P.value = p.thinkingEnabled === null ? "default" : p.thinkingEnabled ? "on" : "off", z.value = !0;
     }
-    async function De() {
+    async function Te() {
       if (ie.value) {
         Z.value = !0, p.thinkingEnabled = P.value === "default" ? null : P.value === "on";
         try {
-          oe.value === "preset" ? await He({ ...p }) : await We({ ...p }), z.value = !1, await j(), u.value?.admin && (q.value = await ne()), N.MessagePlugin.success("模型已保存");
+          oe.value === "preset" ? await tt({ ...p }) : await Ye({ ...p }), z.value = !1, await j(), u.value?.admin && (O.value = await ne()), N.MessagePlugin.success("模型已保存");
         } catch (n) {
           N.MessagePlugin.error(x(n));
         } finally {
@@ -361,7 +554,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
         onConfirm: async () => {
           try {
             const _ = o.id.split(":", 2)[1];
-            n === "preset" ? await Xe(_) : await Fe(_), await j(), u.value?.admin && (q.value = await ne()), N.MessagePlugin.success("模型已删除");
+            n === "preset" ? await lt(_) : await et(_), await j(), u.value?.admin && (O.value = await ne()), N.MessagePlugin.success("模型已删除");
           } catch (_) {
             N.MessagePlugin.error(x(_));
           } finally {
@@ -393,7 +586,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
         download_resource: "下载资源"
       }[n] || n : "工具";
     }
-    function Me(n) {
+    function De(n) {
       return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium", timeStyle: "short" }).format(n);
     }
     function x(n) {
@@ -402,7 +595,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
     return e.watch(f, (n, o) => {
       n !== o && (Q(!0), u.value = void 0, n && j());
     }), e.onMounted(j), e.onBeforeUnmount(() => D.value?.abort()), (n, o) => {
-      const s = e.resolveComponent("t-button"), _ = e.resolveComponent("t-loading"), Ae = e.resolveComponent("t-switch"), Ie = e.resolveComponent("t-dialog");
+      const s = e.resolveComponent("t-button"), _ = e.resolveComponent("t-loading"), Me = e.resolveComponent("t-switch"), Ae = e.resolveComponent("t-dialog");
       return e.openBlock(), e.createElementBlock("section", {
         class: e.normalizeClass(["ai-workspace", { compact: t.compact }])
       }, [
@@ -410,7 +603,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
           e.createElementVNode("div", null, [
             e.createElementVNode("div", { class: "ai-title-row" }, [
               e.createElementVNode("h1", null, "Elements AI"),
-              e.createElementVNode("span", { class: "instance-badge" }, e.toDisplayString(Ne.value), 1)
+              e.createElementVNode("span", { class: "instance-badge" }, e.toDisplayString(Ve.value), 1)
             ]),
             e.createElementVNode("p", null, "通过安全工具管理 MSLX 实例、终端、文件与模组资源")
           ]),
@@ -418,7 +611,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
             e.createVNode(s, {
               size: "small",
               variant: "outline",
-              onClick: Ce
+              onClick: Ne
             }, {
               default: e.withCtx(() => [
                 e.createTextVNode("新对话")
@@ -438,7 +631,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
             e.createVNode(s, {
               size: "small",
               variant: "outline",
-              onClick: $e
+              onClick: _e
             }, {
               default: e.withCtx(() => [
                 e.createTextVNode("设置")
@@ -490,7 +683,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
                   e.createElementVNode("summary", null, e.toDisplayString(l.pending ? "正在思考…" : "思考过程"), 1),
                   e.createElementVNode("pre", null, e.toDisplayString(l.reasoning), 1)
                 ], 8, ["open"])) : e.createCommentVNode("", !0),
-                l.content ? (e.openBlock(), e.createBlock(ot, {
+                l.content ? (e.openBlock(), e.createBlock(mt, {
                   key: 1,
                   content: l.content
                 }, null, 8, ["content"])) : l.pending ? (e.openBlock(), e.createElementBlock("div", {
@@ -552,7 +745,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
                       size: "small",
                       variant: "outline",
                       disabled: !!A.value,
-                      onClick: (ht) => Y(l, $)
+                      onClick: (yt) => Y(l, $)
                     }, {
                       default: e.withCtx(() => [
                         e.createTextVNode(e.toDisplayString($), 1)
@@ -588,7 +781,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
                   e.createElementVNode("summary", null, "查看工具回执"),
                   e.createElementVNode("pre", null, e.toDisplayString(l.content), 1)
                 ])) : e.createCommentVNode("", !0),
-                l.diff ? (e.openBlock(), e.createBlock(lt, {
+                l.diff ? (e.openBlock(), e.createBlock(ut, {
                   key: 3,
                   diff: l.diff
                 }, null, 8, ["diff"])) : e.createCommentVNode("", !0)
@@ -653,7 +846,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
                 rows: "3",
                 disabled: h.value || !u.value?.ready,
                 placeholder: "输入你的需求；Shift+Enter 换行",
-                onKeydown: Be
+                onKeydown: we
               }, null, 40, ["disabled"]), [
                 [e.vModelText, y.value]
               ]),
@@ -664,7 +857,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
                   theme: "danger",
                   variant: "outline",
                   size: "small",
-                  onClick: we
+                  onClick: be
                 }, {
                   default: e.withCtx(() => [
                     e.createTextVNode("停止")
@@ -709,7 +902,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
                 theme: "danger",
                 variant: "outline",
                 disabled: !S.value.length,
-                onClick: _e
+                onClick: Se
               }, {
                 default: e.withCtx(() => [
                   e.createTextVNode("删除所选")
@@ -718,7 +911,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
               }, 8, ["disabled"])
             ])
           ]),
-          O.value ? (e.openBlock(), e.createElementBlock("div", {
+          q.value ? (e.openBlock(), e.createElementBlock("div", {
             key: 0,
             class: "center-state"
           }, [
@@ -735,14 +928,14 @@ const tt = /* @__PURE__ */ e.defineComponent({
               e.createElementVNode("input", {
                 type: "checkbox",
                 checked: S.value.includes(l.id),
-                onChange: (T) => Se(l.id, T.target.checked)
+                onChange: (T) => xe(l.id, T.target.checked)
               }, null, 40, ["checked", "onChange"]),
               e.createElementVNode("button", {
                 type: "button",
-                onClick: (T) => xe(l.id)
+                onClick: (T) => Be(l.id)
               }, [
                 e.createElementVNode("strong", null, e.toDisplayString(l.title || "未命名对话"), 1),
-                e.createElementVNode("span", null, e.toDisplayString(l.modelName) + " · " + e.toDisplayString(Me(l.updatedAt)), 1)
+                e.createElementVNode("span", null, e.toDisplayString(l.modelName) + " · " + e.toDisplayString(De(l.updatedAt)), 1)
               ], 8, ["onClick"])
             ]))), 128))
           ])) : (e.openBlock(), e.createElementBlock("div", {
@@ -782,14 +975,14 @@ const tt = /* @__PURE__ */ e.defineComponent({
                 e.createElementVNode("p", null, "开启后按 Enter 发送，Shift+Enter 换行；关闭后使用 Ctrl/⌘+Enter 发送。")
               ]),
               e.createElementVNode("div", { class: "settings-action" }, [
-                e.createVNode(Ae, {
+                e.createVNode(Me, {
                   modelValue: I.value,
                   "onUpdate:modelValue": o[5] || (o[5] = (l) => I.value = l)
                 }, null, 8, ["modelValue"]),
                 e.createVNode(s, {
                   size: "small",
                   loading: X.value,
-                  onClick: Te
+                  onClick: $e
                 }, {
                   default: e.withCtx(() => [
                     e.createTextVNode("保存")
@@ -875,11 +1068,11 @@ const tt = /* @__PURE__ */ e.defineComponent({
                   _: 1
                 })
               ]),
-              q.value.length ? (e.openBlock(), e.createElementBlock("div", {
+              O.value.length ? (e.openBlock(), e.createElementBlock("div", {
                 key: 1,
                 class: "model-grid"
               }, [
-                (e.openBlock(!0), e.createElementBlock(e.Fragment, null, e.renderList(q.value, (l) => (e.openBlock(), e.createElementBlock("article", {
+                (e.openBlock(!0), e.createElementBlock(e.Fragment, null, e.renderList(O.value, (l) => (e.openBlock(), e.createElementBlock("article", {
                   key: l.id,
                   class: "model-card"
                 }, [
@@ -919,7 +1112,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
             ])) : e.createCommentVNode("", !0)
           ], 64))
         ])),
-        e.createVNode(Ie, {
+        e.createVNode(Ae, {
           visible: z.value,
           "onUpdate:visible": o[16] || (o[16] = (l) => z.value = l),
           header: p.id ? "编辑模型" : "添加模型",
@@ -931,7 +1124,7 @@ const tt = /* @__PURE__ */ e.defineComponent({
           default: e.withCtx(() => [
             e.createElementVNode("form", {
               class: "model-form",
-              onSubmit: e.withModifiers(De, ["prevent"])
+              onSubmit: e.withModifiers(Te, ["prevent"])
             }, [
               e.createElementVNode("label", null, [
                 e.createElementVNode("span", null, "显示名称"),
@@ -1045,215 +1238,16 @@ const tt = /* @__PURE__ */ e.defineComponent({
       ], 2);
     };
   }
-}), Ee = /* @__PURE__ */ R(at, [["__scopeId", "data-v-b7b8845e"]]), rt = /* @__PURE__ */ e.defineComponent({
-  __name: "ElementsAiPage",
-  setup(t) {
-    return (a, r) => (e.openBlock(), e.createBlock(Ee));
-  }
-});
-function L(t) {
-  "@babel/helpers - typeof";
-  return L = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(a) {
-    return typeof a;
-  } : function(a) {
-    return a && typeof Symbol == "function" && a.constructor === Symbol && a !== Symbol.prototype ? "symbol" : typeof a;
-  }, L(t);
-}
-function it(t, a) {
-  if (L(t) != "object" || !t) return t;
-  var r = t[Symbol.toPrimitive];
-  if (r !== void 0) {
-    var i = r.call(t, a);
-    if (L(i) != "object") return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return (a === "string" ? String : Number)(t);
-}
-function ct(t) {
-  var a = it(t, "string");
-  return L(a) == "symbol" ? a : a + "";
-}
-function st(t, a, r) {
-  return (a = ct(a)) in t ? Object.defineProperty(t, a, {
-    value: r,
-    enumerable: !0,
-    configurable: !0,
-    writable: !0
-  }) : t[a] = r, t;
-}
-var ye = (t) => {
-  var a = ["strokeLinecap", "fillRule", "clipRule", "strokeWidth"];
-  return a.includes(t) ? t.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase() : t;
-}, Ve = (t, a) => {
-  var r = {};
-  if (t.attrs)
-    for (var [i, f] of Object.entries(t.attrs))
-      if (typeof f == "string" && f.startsWith("props.")) {
-        var u = f.split(".")[1];
-        r[ye(i)] = a[u];
-      } else
-        r[ye(i)] = f;
-  t.tag === "svg" && (r.class = a.class, r.style = a.style, r.onClick = a.onClick);
-  var v = t.children ? t.children.map((g) => Ve(g, a)) : [];
-  return e.h(t.tag, r, v);
-}, ut = "t", dt = {
-  classPrefix: ut
-};
-function mt() {
-  var {
-    classPrefix: t
-  } = dt;
-  return {
-    SIZE: {
-      default: "",
-      xs: "".concat(t, "-size-xs"),
-      small: "".concat(t, "-size-s"),
-      medium: "".concat(t, "-size-m"),
-      large: "".concat(t, "-size-l"),
-      xl: "".concat(t, "-size-xl"),
-      block: "".concat(t, "-size-full-width")
-    },
-    STATUS: {
-      loading: "".concat(t, "-is-loading"),
-      disabled: "".concat(t, "-is-disabled"),
-      focused: "".concat(t, "-is-focused"),
-      success: "".concat(t, "-is-success"),
-      error: "".concat(t, "-is-error"),
-      warning: "".concat(t, "-is-warning"),
-      selected: "".concat(t, "-is-selected"),
-      active: "".concat(t, "-is-active"),
-      checked: "".concat(t, "-is-checked"),
-      current: "".concat(t, "-is-current"),
-      hidden: "".concat(t, "-is-hidden"),
-      visible: "".concat(t, "-is-visible"),
-      expanded: "".concat(t, "-is-expanded"),
-      indeterminate: "".concat(t, "-is-indeterminate")
-    }
-  };
-}
-function pt(t) {
-  var a = mt().SIZE, r = e.computed(() => t.value in a ? a[t.value] : ""), i = e.computed(() => t.value === void 0 || t.value in a ? {} : {
-    fontSize: t.value
-  });
-  return {
-    style: i,
-    className: r
-  };
-}
-function he(t, a) {
-  var r = Object.keys(t);
-  if (Object.getOwnPropertySymbols) {
-    var i = Object.getOwnPropertySymbols(t);
-    a && (i = i.filter(function(f) {
-      return Object.getOwnPropertyDescriptor(t, f).enumerable;
-    })), r.push.apply(r, i);
-  }
-  return r;
-}
-function ge(t) {
-  for (var a = 1; a < arguments.length; a++) {
-    var r = arguments[a] != null ? arguments[a] : {};
-    a % 2 ? he(Object(r), !0).forEach(function(i) {
-      st(t, i, r[i]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(t, Object.getOwnPropertyDescriptors(r)) : he(Object(r)).forEach(function(i) {
-      Object.defineProperty(t, i, Object.getOwnPropertyDescriptor(r, i));
-    });
-  }
-  return t;
-}
-var vt = {
-  tag: "svg",
-  attrs: {
-    fill: "none",
-    viewBox: "0 0 24 24",
-    width: "1em",
-    height: "1em"
-  },
-  children: [{
-    tag: "g",
-    attrs: {
-      id: "chat"
-    },
-    children: [{
-      tag: "path",
-      attrs: {
-        id: "fill1",
-        fill: "props.fillColor1",
-        d: "M2.5 3H21.5V17H6.5L2.5 20.5V3Z"
-      }
-    }, {
-      tag: "path",
-      attrs: {
-        id: "stroke1",
-        stroke: "props.strokeColor1",
-        d: "M2.5 3H21.5V17H6.5L2.5 20.5V3Z",
-        strokeLinecap: "square",
-        strokeWidth: "props.strokeWidth"
-      }
-    }]
-  }]
-}, ft = e.defineComponent({
-  name: "ChatIcon",
-  props: {
-    size: {
-      type: String
-    },
-    onClick: {
-      type: Function
-    },
-    fillColor: {
-      type: [Array, String]
-    },
-    strokeColor: {
-      type: [Array, String]
-    },
-    strokeWidth: {
-      type: Number
-    }
-  },
-  setup(t, a) {
-    var {
-      attrs: r
-    } = a, i = e.computed(() => t.size), f = e.computed(() => t.strokeColor ? Array.isArray(t.strokeColor) ? t.strokeColor[0] : t.strokeColor : "currentColor"), u = e.computed(() => {
-      var k;
-      return t.strokeColor ? Array.isArray(t.strokeColor) ? (k = t.strokeColor[1]) !== null && k !== void 0 ? k : t.strokeColor[0] : t.strokeColor : "currentColor";
-    }), v = e.computed(() => t.fillColor ? Array.isArray(t.fillColor) ? t.fillColor[0] : t.fillColor : "transparent"), g = e.computed(() => {
-      var k;
-      return t.fillColor ? Array.isArray(t.fillColor) ? (k = t.fillColor[1]) !== null && k !== void 0 ? k : t.fillColor[0] : t.fillColor : "transparent";
-    }), c = e.computed(() => t.fillColor ? Array.isArray(t.fillColor) ? t.fillColor[0] : t.fillColor : "currentColor"), {
-      className: m,
-      style: d
-    } = pt(i), y = e.computed(() => ["t-icon", "t-icon-chat", m.value]), h = e.computed(() => ge(ge({
-      fill: "none"
-    }, d.value), r.style)), b = e.computed(() => ({
-      class: y.value,
-      style: h.value,
-      onClick: (k) => {
-        var E;
-        return (E = t.onClick) === null || E === void 0 ? void 0 : E.call(t, {
-          e: k
-        });
-      },
-      strokeColor1: f.value,
-      strokeColor2: u.value,
-      fillColor1: v.value,
-      fillColor2: g.value,
-      strokeWidth: t.strokeWidth || 2,
-      filledColor: c.value
-    }));
-    return () => Ve(vt, b.value);
-  }
-});
-const kt = /* @__PURE__ */ e.defineComponent({
+}), vt = /* @__PURE__ */ R(pt, [["__scopeId", "data-v-b7b8845e"]]), ft = /* @__PURE__ */ e.defineComponent({
   __name: "InstanceAiDialog",
   props: {
     serverId: {}
   },
   setup(t, { expose: a }) {
-    const r = t, i = e.ref(!1), f = e.shallowRef(null);
+    const i = t, r = e.ref(!1), f = e.shallowRef(null);
     let u;
     function v() {
-      i.value = !0;
+      r.value = !0;
     }
     function g() {
       const c = document.querySelector(
@@ -1284,7 +1278,7 @@ const kt = /* @__PURE__ */ e.defineComponent({
                 onClick: v
               }, {
                 default: e.withCtx(() => [
-                  e.createVNode(e.unref(ft), { size: "20px" })
+                  e.createVNode(e.unref(We), { size: "20px" })
                 ]),
                 _: 1
               })
@@ -1293,8 +1287,8 @@ const kt = /* @__PURE__ */ e.defineComponent({
           })
         ], 8, ["to"])) : e.createCommentVNode("", !0),
         e.createVNode(h, {
-          visible: i.value,
-          "onUpdate:visible": m[0] || (m[0] = (b) => i.value = b),
+          visible: r.value,
+          "onUpdate:visible": m[0] || (m[0] = (b) => r.value = b),
           header: "Elements AI",
           placement: "right",
           size: "min(720px, 100vw)",
@@ -1304,8 +1298,8 @@ const kt = /* @__PURE__ */ e.defineComponent({
         }, {
           default: e.withCtx(() => [
             e.createElementVNode("div", { class: "instance-ai-sidebar" }, [
-              e.createVNode(Ee, {
-                "current-instance-id": r.serverId,
+              e.createVNode(vt, {
+                "current-instance-id": i.serverId,
                 compact: ""
               }, null, 8, ["current-instance-id"])
             ])
@@ -1315,32 +1309,16 @@ const kt = /* @__PURE__ */ e.defineComponent({
       ], 64);
     };
   }
-}), yt = /* @__PURE__ */ R(kt, [["__scopeId", "data-v-75b8d0fa"]]), gt = {
+}), kt = /* @__PURE__ */ R(ft, [["__scopeId", "data-v-75b8d0fa"]]), ht = {
   name: "ElementsAI",
-  version: "0.1.0",
-  routes: [
-    {
-      path: "/elements-ai",
-      name: "ElementsAIBase",
-      component: "HOST_LAYOUT",
-      meta: { title: "Elements AI", icon: "chat", roleCode: ["admin", "user"] },
-      children: [
-        {
-          path: "",
-          name: "ElementsAIChat",
-          component: rt,
-          meta: { title: "Elements AI", hidden: !0, roleCode: ["admin", "user"] }
-        }
-      ]
-    }
-  ],
+  version: "0.1.1",
   extensions: [
     {
       slot: "instance-console-overview-bottom",
-      component: yt
+      component: kt
     }
   ]
 };
 export {
-  gt as pluginConfig
+  ht as pluginConfig
 };
