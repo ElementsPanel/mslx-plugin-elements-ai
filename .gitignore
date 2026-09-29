@@ -363,6 +363,7 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Elements AI frontend and local tooling
+Frontend/dist/
 Frontend/.vite/
 Frontend/*.tsbuildinfo
 .pnpm-store/

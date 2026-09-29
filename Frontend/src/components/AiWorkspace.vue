@@ -2,6 +2,11 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import {
+  CheckCircleIcon,
+  ErrorCircleIcon,
+  LoadingIcon,
+} from 'tdesign-icons-vue-next';
+import {
   deleteConversations,
   deleteModel,
   deletePreset,
@@ -299,6 +304,8 @@ async function openSettings() {
   }
 }
 
+defineExpose({ newChat, openHistory, openSettings });
+
 async function persistPreferences() {
   if (!status.value) return;
   savingPreferences.value = true;
@@ -375,7 +382,8 @@ function toolLabel(name?: string) {
     control_instance: '控制实例', send_command: '发送命令', update_instance: '更新实例', create_instance: '创建实例',
     delete_instance: '删除实例', list_files: '列出文件', read_file: '读取文件', edit_file: '编辑文件',
     create_file: '创建文件', delete_file: '删除文件', search_resources: '搜索资源',
-    list_resource_versions: '查询资源版本', download_resource: '下载资源',
+    list_resource_versions: '查询资源版本', download_resource: '下载资源', list_msl_cores: '查询 MSL 核心',
+    list_msl_core_versions: '查询核心版本', list_msl_java_versions: '查询 Java 版本',
   };
   return name ? labels[name] || name : '工具';
 }
@@ -403,7 +411,7 @@ onBeforeUnmount(() => controller.value?.abort());
 
 <template>
   <section class="ai-workspace" :class="{ compact }">
-    <header class="ai-header">
+    <header v-if="!compact" class="ai-header">
       <div>
         <div class="ai-title-row">
           <h1>Elements AI</h1>
@@ -433,7 +441,7 @@ onBeforeUnmount(() => controller.value?.abort());
         <article v-for="(message, index) in messages" :key="index" class="message-row" :class="message.role">
           <div v-if="message.role === 'user'" class="message-bubble user-bubble">{{ message.content }}</div>
 
-          <div v-else-if="message.role === 'assistant'" class="message-bubble assistant-bubble">
+          <div v-else-if="message.role === 'assistant'" class="assistant-message">
             <details v-if="message.reasoning" class="reasoning" :open="message.pending">
               <summary>{{ message.pending ? '正在思考…' : '思考过程' }}</summary>
               <pre>{{ message.reasoning }}</pre>
@@ -442,9 +450,11 @@ onBeforeUnmount(() => controller.value?.abort());
             <div v-else-if="message.pending" class="typing"><span></span><span></span><span></span></div>
           </div>
 
-          <div v-else-if="message.role === 'tool'" class="tool-card" :class="{ failed: message.ok === false }">
+          <div v-else-if="message.role === 'tool'" class="tool-row" :class="{ failed: message.ok === false }">
             <div class="tool-title">
-              <span>{{ message.pending ? '◌' : message.ok ? '✓' : '!' }}</span>
+              <LoadingIcon v-if="message.pending" class="tool-status-icon pending" size="16px" />
+              <CheckCircleIcon v-else-if="message.ok" class="tool-status-icon success" size="16px" />
+              <ErrorCircleIcon v-else class="tool-status-icon failed" size="16px" />
               <strong>{{ toolLabel(message.tool) }}</strong>
               <small>{{ message.pending ? '处理中' : message.ok ? '已完成' : '未执行' }}</small>
             </div>
@@ -466,14 +476,10 @@ onBeforeUnmount(() => controller.value?.abort());
                 <t-button size="small" :loading="questionSubmitting === message.question.id" @click="answerQuestion(message)">提交</t-button>
               </div>
             </div>
-            <details v-if="message.content && !message.approval && !message.question" class="tool-receipt">
-              <summary>查看工具回执</summary>
-              <pre>{{ message.content }}</pre>
-            </details>
             <FileDiffView v-if="message.diff" :diff="message.diff" />
           </div>
 
-          <div v-else class="error-bubble">{{ message.content }}</div>
+          <div v-else class="error-message">{{ message.content }}</div>
         </article>
       </main>
 
@@ -605,7 +611,7 @@ onBeforeUnmount(() => controller.value?.abort());
 .message-row.user { justify-content: flex-end; }
 .message-bubble { max-width: min(780px, 86%); border-radius: 14px; padding: 0.75rem 0.9rem; }
 .user-bubble { white-space: pre-wrap; color: var(--td-text-color-anti); background: var(--td-brand-color); border-bottom-right-radius: 5px; }
-.assistant-bubble { background: var(--td-bg-color-container); border: 1px solid var(--td-component-border); border-bottom-left-radius: 5px; }
+.assistant-message { width: min(780px, 92%); }
 .reasoning { margin-bottom: 0.7rem; color: var(--td-text-color-secondary); font-size: 12px; }
 .reasoning summary { cursor: pointer; font-weight: 600; }
 .reasoning pre { white-space: pre-wrap; max-height: 220px; overflow: auto; margin: 0.45rem 0 0; padding: 0.55rem; background: var(--td-bg-color-secondarycontainer); border-radius: 8px; }
@@ -613,17 +619,17 @@ onBeforeUnmount(() => controller.value?.abort());
 .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--td-brand-color); animation: pulse 1s infinite alternate; }
 .typing span:nth-child(2) { animation-delay: .2s; }.typing span:nth-child(3) { animation-delay: .4s; }
 @keyframes pulse { to { opacity: .25; transform: translateY(-3px); } }
-.tool-card { width: min(780px, 90%); padding: 0.72rem 0.8rem; border: 1px solid var(--td-component-border); border-radius: 12px; background: var(--td-bg-color-container); }
-.tool-card.failed { border-color: color-mix(in srgb, var(--td-error-color) 45%, var(--td-component-border)); }
-.tool-title { display: flex; align-items: center; gap: 0.45rem; }.tool-title small { margin-left: auto; color: var(--td-text-color-placeholder); }
-.approval-box, .question-box { margin-top: 0.65rem; padding: 0.7rem; border-radius: 10px; background: var(--td-bg-color-secondarycontainer); }
+.tool-row { width: min(780px, 92%); padding: 0.25rem 0; }
+.tool-row.failed { color: var(--td-error-color); }
+.tool-title { display: flex; align-items: center; gap: 0.45rem; color: var(--td-text-color-secondary); font-size: 13px; }.tool-title strong { color: var(--td-text-color-primary); font-weight: 600; }.tool-title small { margin-left: auto; color: var(--td-text-color-placeholder); }.tool-status-icon { flex: 0 0 auto; }.tool-status-icon.pending { color: var(--td-brand-color); animation: spin 1s linear infinite; }.tool-status-icon.success { color: var(--td-success-color); }.tool-status-icon.failed { color: var(--td-error-color); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.approval-box, .question-box { margin-top: 0.65rem; padding: 0.7rem 0.8rem; border-left: 2px solid var(--td-component-border); color: var(--td-text-color-secondary); }
 .approval-box p, .question-box p { margin: 0 0 0.55rem; font-weight: 600; }
-.approval-box pre, .tool-receipt pre { overflow: auto; max-height: 240px; white-space: pre-wrap; margin: 0 0 0.65rem; padding: 0.6rem; border-radius: 8px; color: #e5e7eb; background: #151922; }
+.approval-box pre { overflow: auto; max-height: 240px; white-space: pre-wrap; margin: 0 0 0.65rem; padding: 0.6rem; border-radius: 6px; color: #e5e7eb; background: #151922; }
 .option-list { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .custom-answer { display: flex; gap: 0.5rem; margin-top: 0.55rem; }.custom-answer input { flex: 1; }
-.tool-receipt { margin-top: 0.5rem; font-size: 12px; }.tool-receipt summary { cursor: pointer; color: var(--td-text-color-secondary); }
-.error-bubble, .error-strip { color: var(--td-error-color); background: color-mix(in srgb, var(--td-error-color) 9%, var(--td-bg-color-container)); border: 1px solid color-mix(in srgb, var(--td-error-color) 28%, transparent); }
-.error-bubble { max-width: min(780px, 90%); padding: 0.7rem 0.8rem; border-radius: 12px; }
+.error-message { width: min(780px, 92%); color: var(--td-error-color); }
+.error-strip { color: var(--td-error-color); background: color-mix(in srgb, var(--td-error-color) 9%, var(--td-bg-color-container)); border: 1px solid color-mix(in srgb, var(--td-error-color) 28%, transparent); }
 .activity-strip, .error-strip { padding: 0.45rem 1.25rem; font-size: 12px; }.activity-strip { display: flex; justify-content: space-between; color: var(--td-brand-color); border-top: 1px solid var(--td-component-border); }
 .composer { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--td-component-border); background: var(--td-bg-color-container); }
 .composer-controls { display: flex; gap: 0.75rem; margin-bottom: 0.55rem; }.composer-controls label { display: flex; align-items: center; gap: 0.4rem; font-size: 12px; color: var(--td-text-color-secondary); }.composer-controls .model-select { flex: 1; }.composer-controls select { min-width: 130px; }.model-select select { width: min(420px, 100%); }
@@ -638,5 +644,5 @@ onBeforeUnmount(() => controller.value?.abort());
 .settings-card, .model-section { margin-top: 1rem; padding: 1rem; border: 1px solid var(--td-component-border); border-radius: 14px; background: var(--td-bg-color-container); }.settings-action { display: flex; align-items: center; gap: 0.65rem; }.model-section { display: block; }.model-card { padding: 0.75rem; border: 1px solid var(--td-component-border); border-radius: 11px; }.model-card > div:first-child { display: grid; gap: 0.2rem; }.model-card span, .model-card small { color: var(--td-text-color-secondary); }.model-card small { overflow-wrap: anywhere; }
 .muted-box, .center-state { display: flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 100px; color: var(--td-text-color-secondary); }.muted-box { min-height: auto; margin-top: 0.8rem; padding: 1rem; border-radius: 10px; background: var(--td-bg-color-secondarycontainer); }
 .model-form { display: grid; gap: 0.8rem; }.model-form label { display: grid; gap: 0.3rem; font-size: 13px; }.model-form label > span { font-weight: 600; }.model-form input, .model-form select, .custom-answer input, .composer-controls select { box-sizing: border-box; min-height: 34px; padding: 0.42rem 0.55rem; border: 1px solid var(--td-component-border); border-radius: 7px; outline: 0; color: var(--td-text-color-primary); background: var(--td-bg-color-container); }.model-form input:focus, .model-form select:focus, .custom-answer input:focus, .composer-controls select:focus { border-color: var(--td-brand-color); }.model-form .check-line { display: flex; grid-template-columns: auto 1fr; align-items: center; justify-content: start; }.check-line input { min-height: auto; }.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }.dialog-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.3rem; }
-@media (max-width: 720px) { .ai-workspace { height: calc(100vh - 100px); min-height: 520px; }.ai-header { align-items: flex-start; }.header-actions { justify-content: flex-end; }.message-bubble, .tool-card { max-width: 96%; width: auto; }.composer-controls { align-items: stretch; flex-direction: column; }.composer-controls label { justify-content: space-between; }.composer-controls select, .model-select select { width: 68%; }.panel-heading, .section-heading, .settings-card, .model-card { align-items: flex-start; flex-direction: column; }.form-grid { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .ai-workspace { height: calc(100vh - 100px); min-height: 520px; }.ai-header { align-items: flex-start; }.header-actions { justify-content: flex-end; }.message-bubble, .assistant-message, .tool-row, .error-message { max-width: 96%; width: auto; }.composer-controls { align-items: stretch; flex-direction: column; }.composer-controls label { justify-content: space-between; }.composer-controls select, .model-select select { width: 68%; }.panel-heading, .section-heading, .settings-card, .model-card { align-items: flex-start; flex-direction: column; }.form-grid { grid-template-columns: 1fr; } }
 </style>

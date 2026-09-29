@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
-import { ChatIcon } from 'tdesign-icons-vue-next';
+import {
+  ChatAddIcon,
+  ChatIcon,
+  HistoryIcon,
+  SettingIcon,
+} from 'tdesign-icons-vue-next';
 import AiWorkspace from '../components/AiWorkspace.vue';
 
 const props = defineProps<{ serverId?: number }>();
 const visible = ref(false);
 const headerTarget = shallowRef<HTMLElement | null>(null);
 const routeInstanceId = ref<number>();
+const workspace = ref<{
+  newChat: () => void;
+  openHistory: () => Promise<void>;
+  openSettings: () => Promise<void>;
+} | null>(null);
 let headerObserver: MutationObserver | undefined;
 const currentInstanceId = computed(() => props.serverId ?? routeInstanceId.value);
 
@@ -58,15 +68,54 @@ defineExpose({ open });
 
   <t-drawer
     v-model:visible="visible"
-    header="Elements AI"
     placement="right"
     size="min(720px, 100vw)"
     attach="body"
     drawer-class-name="elements-ai-drawer"
     :footer="false"
   >
+    <template #header>
+      <div class="drawer-header">
+        <span>Elements AI</span>
+        <div class="drawer-header-actions">
+          <t-tooltip content="新对话" placement="bottom">
+            <t-button
+              theme="default"
+              shape="square"
+              variant="text"
+              aria-label="新对话"
+              @click="workspace?.newChat()"
+            >
+              <ChatAddIcon size="20px" />
+            </t-button>
+          </t-tooltip>
+          <t-tooltip content="历史" placement="bottom">
+            <t-button
+              theme="default"
+              shape="square"
+              variant="text"
+              aria-label="历史"
+              @click="workspace?.openHistory()"
+            >
+              <HistoryIcon size="20px" />
+            </t-button>
+          </t-tooltip>
+          <t-tooltip content="设置" placement="bottom">
+            <t-button
+              theme="default"
+              shape="square"
+              variant="text"
+              aria-label="设置"
+              @click="workspace?.openSettings()"
+            >
+              <SettingIcon size="20px" />
+            </t-button>
+          </t-tooltip>
+        </div>
+      </div>
+    </template>
     <div class="instance-ai-sidebar">
-      <AiWorkspace :current-instance-id="currentInstanceId" compact />
+      <AiWorkspace ref="workspace" :current-instance-id="currentInstanceId" compact />
     </div>
   </t-drawer>
 </template>
@@ -75,6 +124,20 @@ defineExpose({ open });
 .instance-ai-sidebar {
   height: 100%;
   min-height: 0;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.75rem;
+}
+
+.drawer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
 }
 
 .instance-ai-sidebar :deep(.ai-workspace) {

@@ -2,6 +2,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Runtime.InteropServices;
+using System.Net;
+using Microsoft.AspNetCore.Connections.Features;
+using Microsoft.AspNetCore.Http;
 using MSLX.Plugin.ElementsAI.Models;
 using MSLX.SDK;
 using MSLX.SDK.IServices;
@@ -10,13 +14,34 @@ using MSLX.SDK.Models.Resources;
 
 namespace MSLX.Plugin.ElementsAI.Services;
 
+public sealed record MslxHostRequestContext(string? BaseUrl, string? Token, string? NodeId)
+{
+    public static MslxHostRequestContext Capture(HttpContext context)
+    {
+        var token = context.Request.Headers["x-user-token"].FirstOrDefault();
+        var nodeId = context.Request.Headers["x-node-id"].FirstOrDefault();
+        string? baseUrl = null;
+        var localPort = context.Connection.LocalPort;
+        if (localPort is >= 1 and <= 65535)
+        {
+            var localAddress = context.Connection.LocalIpAddress ?? IPAddress.Loopback;
+            var localScheme = context.Features.Get<ITlsHandshakeFeature>() is null ? "http" : "https";
+            baseUrl = new UriBuilder(localScheme, localAddress.ToString(), localPort).Uri.GetLeftPart(UriPartial.Authority);
+        }
+        return new MslxHostRequestContext(baseUrl, token, nodeId);
+    }
+}
+
 public sealed class MslxToolService(
     IInstanceLifecycleService lifecycle,
     IInstanceConsoleService console,
     IUnifiedResourceService resources,
-    UserContext user)
+    UserContext user,
+    MslxHostRequestContext hostRequest)
 {
     private const int MaxTextBytes = 64 * 1024;
+    private const string MslApiBase = "https://api.mslmc.cn";
+    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.8";
     private readonly Dictionary<string, string> _fileReads = new(StringComparer.Ordinal);
 
     public static readonly HashSet<string> SensitiveTools =
@@ -111,14 +136,23 @@ public sealed class MslxToolService(
                 ["overwrite"] = BooleanSchema()
             }), "instanceId", "source", "projectId", "versionId", "projectType")
         };
+        tools.Add(Define("list_msl_cores", "List server core identifiers supported by the official MSL source. This is read-only.", new JsonObject()));
+        tools.Add(Define("list_msl_core_versions", "List exact Minecraft versions available for one official MSL server core. Call this before selecting a version.", new JsonObject
+        {
+            ["core"] = StringSchema(100)
+        }, "core"));
+        tools.Add(Define("list_msl_java_versions", "List Java versions available for online installation by MSLX on this host. This is read-only.", new JsonObject()));
         if (admin)
         {
-            tools.Add(Define("create_instance", "Create an MSLX Java instance configuration. Ask for missing name, absolute base path, Java and core; never start it automatically.", new JsonObject
+            tools.Add(Define("create_instance", "Create an MSLX Java instance. For coreSource=msl, core is an official MSL core identifier and coreVersion plus javaVersion are required; basePath may be omitted so MSLX uses its default directory, and MSLX downloads the core and Java online. For coreSource=local (or omitted), provide an absolute basePath, local core filename and java path/value. Never start the new instance automatically.", new JsonObject
             {
                 ["name"] = StringSchema(100), ["basePath"] = StringSchema(2048),
-                ["java"] = StringSchema(2048), ["core"] = StringSchema(255),
-                ["minMemoryMb"] = IntegerSchema(1, 1048576), ["maxMemoryMb"] = IntegerSchema(1, 1048576)
-            }, "name", "basePath", "java", "core"));
+                ["coreSource"] = EnumSchema("local", "msl"), ["core"] = StringSchema(255),
+                ["coreVersion"] = StringSchema(100), ["java"] = StringSchema(2048),
+                ["javaVersion"] = EnumSchema("8", "11", "17", "21", "25"),
+                ["minMemoryMb"] = IntegerSchema(1, 1048576), ["maxMemoryMb"] = IntegerSchema(1, 1048576),
+                ["args"] = StringSchema(4096, allowEmpty: true), ["ignoreEula"] = BooleanSchema()
+            }, "name", "core"));
             tools.Add(Define("delete_instance", "Delete a stopped instance configuration. deleteFiles permanently removes its directory and requires an explicit request.", Merge(TargetSchema(), new JsonObject
             {
                 ["deleteFiles"] = BooleanSchema()
@@ -150,7 +184,10 @@ public sealed class MslxToolService(
             "search_resources" => Result(await SearchResourcesAsync(args)),
             "list_resource_versions" => Result(await ListResourceVersionsAsync(args)),
             "download_resource" => Result(await DownloadResourceAsync(args, onProgress, cancellationToken)),
-            "create_instance" when user.IsAdmin => Result(CreateInstance(args)),
+            "list_msl_cores" => Result(await ListMslCoresAsync(cancellationToken)),
+            "list_msl_core_versions" => Result(await ListMslCoreVersionsAsync(args, cancellationToken)),
+            "list_msl_java_versions" => Result(await ListMslJavaVersionsAsync(cancellationToken)),
+            "create_instance" when user.IsAdmin => Result(await CreateInstanceAsync(args, cancellationToken)),
             "delete_instance" when user.IsAdmin => Result(DeleteInstance(args)),
             _ => throw new ToolException("不支持的工具或当前账号没有权限。")
         };
@@ -503,27 +540,220 @@ public sealed class MslxToolService(
         }
     }
 
-    private object CreateInstance(JsonElement args)
+    private async Task<object> ListMslCoresAsync(CancellationToken cancellationToken)
+    {
+        var data = await MslGetDataAsync("/v4/mirrors", cancellationToken);
+        return new { source = "msl", cores = JavaMslCoreGroups(data) };
+    }
+
+    private async Task<object> ListMslCoreVersionsAsync(JsonElement args, CancellationToken cancellationToken)
+    {
+        var core = MslIdentifier(RequiredString(args, "core", 100), "核心标识");
+        var data = await MslGetDataAsync($"/v4/mirrors/{Uri.EscapeDataString(core)}", cancellationToken);
+        return new { source = "msl", core, data };
+    }
+
+    private async Task<object> ListMslJavaVersionsAsync(CancellationToken cancellationToken)
+    {
+        var (os, arch, path) = JavaQuery();
+        var data = await MslGetDataAsync(path, cancellationToken);
+        return new { source = "msl", os, arch, versions = data };
+    }
+
+    private async Task<object> CreateInstanceAsync(JsonElement args, CancellationToken cancellationToken)
     {
         var name = RequiredString(args, "name", 100);
-        var basePath = Path.GetFullPath(RequiredString(args, "basePath", 2048));
-        if (Path.GetPathRoot(basePath) == basePath) throw new ToolException("不能把文件系统根目录用作实例目录。");
-        var java = RequiredString(args, "java", 2048);
-        var core = RequiredString(args, "core", 255);
-        if (Path.GetFileName(core) != core) throw new ToolException("核心文件名无效。");
+        var source = OptionalString(args, "coreSource", 20).ToLowerInvariant();
+        if (source.Length == 0) source = "local";
+        if (source is not ("local" or "msl")) throw new ToolException("核心来源无效。");
+        var basePathInput = OptionalString(args, "basePath", 2048);
+        var basePath = basePathInput.Length == 0 ? string.Empty : Path.GetFullPath(basePathInput);
+        if (basePath.Length > 0 && Path.GetPathRoot(basePath) == basePath)
+            throw new ToolException("不能把文件系统根目录用作实例目录。");
+        var coreInput = RequiredString(args, "core", 255);
         var min = OptionalInt(args, "minMemoryMb", 1024, 1, 1048576);
         var max = OptionalInt(args, "maxMemoryMb", 2048, 1, 1048576);
         if (min > max) throw new ToolException("最小内存不能大于最大内存。");
-        if (SDK.MSLX.Config.Servers.GetServerList().Any(item => Path.GetFullPath(item.Base) == basePath))
+        if (basePath.Length > 0 && SDK.MSLX.Config.Servers.GetServerList().Any(item => Path.GetFullPath(item.Base) == basePath))
             throw new ToolException("该实例目录已被使用。");
+
+        if (source == "msl")
+        {
+            var core = MslIdentifier(coreInput, "核心标识");
+            var version = MslIdentifier(RequiredString(args, "coreVersion", 100), "核心版本");
+            var javaVersion = RequiredString(args, "javaVersion", 2);
+            if (javaVersion is not ("8" or "11" or "17" or "21" or "25"))
+                throw new ToolException("Java 版本必须是 8、11、17、21 或 25。");
+            var coreGroups = JavaMslCoreGroups(await MslGetDataAsync("/v4/mirrors", cancellationToken));
+            if (!coreGroups.Any(group => group.Value is JsonArray values && values.Any(item => item?.GetValue<string>() == core)))
+                throw new ToolException("该核心不属于 MSL 支持的 Java 服务端核心。");
+            var (_, _, javaPath) = JavaQuery();
+            var availableJava = await MslGetDataAsync(javaPath, cancellationToken);
+            if (availableJava is not JsonArray javaVersions || !javaVersions.Any(item => item?.GetValue<string>() == javaVersion))
+                throw new ToolException($"当前系统不支持在线安装 Java {javaVersion}。");
+            var download = await MslGetDataAsync($"/v4/download/server/{Uri.EscapeDataString(core)}/{Uri.EscapeDataString(version)}?build=latest", cancellationToken);
+            if (download is not JsonObject downloadObject)
+                throw new ToolException("MSL 未返回有效的核心下载信息。");
+            var coreUrl = downloadObject["url"]?.GetValue<string>()?.Trim();
+            if (string.IsNullOrWhiteSpace(coreUrl) || !Uri.TryCreate(coreUrl, UriKind.Absolute, out var parsedUrl) || parsedUrl.Scheme is not ("http" or "https"))
+                throw new ToolException("MSL 返回的核心下载地址无效。");
+            var coreSha256 = downloadObject["sha256"]?.GetValue<string>()?.Trim() ?? string.Empty;
+            if (coreSha256.Length > 0 && (coreSha256.Length != 64 || !coreSha256.All(Uri.IsHexDigit)))
+                throw new ToolException("MSL 返回的核心校验和无效。");
+            var mslCoreFile = CoreFileName(core, version, parsedUrl);
+            var payload = new
+            {
+                name,
+                path = basePath.Length == 0 ? null : basePath,
+                java = $"MSLX://Java/{javaVersion}",
+                core = mslCoreFile,
+                coreUrl,
+                coreSha256,
+                minM = min,
+                maxM = max,
+                args = OptionalString(args, "args", 4096),
+                ignoreEula = OptionalBoolean(args, "ignoreEula", false)
+            };
+            var response = await CreateHostInstanceAsync(payload, cancellationToken);
+            return new
+            {
+                source = "msl",
+                core,
+                coreVersion = version,
+                javaVersion,
+                coreFile = mslCoreFile,
+                coreUrl,
+                instance = response
+            };
+        }
+
+        if (basePath.Length == 0) throw new ToolException("使用本地核心创建实例时必须提供绝对 basePath。");
+        var java = RequiredString(args, "java", 2048);
+        var coreFile = LocalCoreFile(coreInput);
         Directory.CreateDirectory(basePath);
         var id = SDK.MSLX.Config.Servers.GenerateServerId();
         var server = new McServerInfo.ServerInfo
         {
-            ID = checked((int)id), Name = name, Base = basePath, Java = java, Core = core, MinM = min, MaxM = max
+            ID = checked((int)id), Name = name, Base = basePath, Java = java, Core = coreFile, MinM = min, MaxM = max,
+            Args = OptionalString(args, "args", 4096), IgnoreEula = OptionalBoolean(args, "ignoreEula", false)
         };
         if (!SDK.MSLX.Config.Servers.CreateServer(server)) throw new ToolException("创建实例失败。");
-        return new { instanceId = id, created = true, started = false, name, basePath };
+        return new { source = "local", instanceId = id, created = true, started = false, name, basePath };
+    }
+
+    private async Task<JsonNode> MslGetDataAsync(string path, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var response = await SDK.MSLX.Http.GetAsync(
+            MslApiBase + path,
+            null!,
+            new Dictionary<string, string> { ["User-Agent"] = MslApiUserAgent },
+            TimeSpan.FromSeconds(20));
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!response.IsSuccessStatusCode)
+            throw new ToolException($"MSL 请求失败（HTTP {response.StatusCode}）。");
+        return ParseMslData(response.Content);
+    }
+
+    private async Task<JsonNode> CreateHostInstanceAsync(object payload, CancellationToken cancellationToken)
+    {
+        var token = hostRequest.Token;
+        if (string.IsNullOrWhiteSpace(token)) throw new ToolException("未提供认证凭证，无法提交 MSLX 创建任务。");
+        var baseUrl = hostRequest.BaseUrl;
+        if (string.IsNullOrWhiteSpace(baseUrl)) throw new ToolException("无法确定 MSLX 本地地址，无法提交创建任务。");
+        var headers = new Dictionary<string, string> { ["x-user-token"] = token };
+        var nodeId = hostRequest.NodeId;
+        if (!string.IsNullOrWhiteSpace(nodeId)) headers["x-node-id"] = nodeId;
+        var response = await SDK.MSLX.Http.PostAsync(
+            $"{baseUrl}/api/instance/createServer",
+            MSLX.SDK.Interfaces.PluginHttpContentType.Json,
+            payload,
+            headers,
+            TimeSpan.FromSeconds(30));
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!response.IsSuccessStatusCode)
+            throw new ToolException($"MSLX 创建任务失败（HTTP {response.StatusCode}）：{ExtractApiMessage(response.Content)}");
+        return ParseApiResponse(response.Content);
+    }
+
+    private static JsonNode ParseMslData(string? content)
+    {
+        JsonNode root;
+        try { root = JsonNode.Parse(content ?? string.Empty) ?? throw new InvalidOperationException(); }
+        catch { throw new ToolException("MSL 返回了无法解析的响应。"); }
+        var code = root["code"]?.GetValue<int>() ?? 0;
+        if (code != 200) throw new ToolException($"MSL 请求失败：{root["message"]?.GetValue<string>() ?? "未知错误"}");
+        return root["data"]?.DeepClone() ?? throw new ToolException("MSL 响应缺少数据。");
+    }
+
+    private static JsonNode ParseApiResponse(string? content)
+    {
+        JsonNode root;
+        try { root = JsonNode.Parse(content ?? string.Empty) ?? throw new InvalidOperationException(); }
+        catch { throw new ToolException("MSLX 创建接口返回了无法解析的响应。"); }
+        var code = root["code"]?.GetValue<int>() ?? 0;
+        if (code != 200) throw new ToolException($"MSLX 创建任务失败：{root["message"]?.GetValue<string>() ?? "未知错误"}");
+        return root["data"]?.DeepClone() ?? root;
+    }
+
+    private static string ExtractApiMessage(string? content)
+    {
+        try
+        {
+            var root = JsonNode.Parse(content ?? string.Empty);
+            return root?["message"]?.GetValue<string>() ?? "未知错误";
+        }
+        catch { return "未知错误"; }
+    }
+
+    private static JsonObject JavaMslCoreGroups(JsonNode data)
+    {
+        if (data is not JsonObject groups) throw new ToolException("MSL 返回的核心列表无效。");
+        var result = new JsonObject();
+        foreach (var group in groups)
+        {
+            if (group.Key.Equals("bedrockCore", StringComparison.OrdinalIgnoreCase)) continue;
+            if (group.Value is JsonArray) result[group.Key] = group.Value.DeepClone();
+        }
+        if (result.Count == 0) throw new ToolException("MSL 未返回 Java 服务端核心。");
+        return result;
+    }
+
+    private static (string Os, string Arch, string Path) JavaQuery()
+    {
+        var os = OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux";
+        var arch = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.X64 => "x64",
+            Architecture.Arm64 => "arm64",
+            Architecture.X86 => "x86",
+            Architecture.Arm => "arm",
+            _ => throw new ToolException("当前系统架构不支持在线 Java 查询。")
+        };
+        return (os, arch, $"/v3/query/jdk?os={Uri.EscapeDataString(os)}&arch={Uri.EscapeDataString(arch)}");
+    }
+
+    private static string MslIdentifier(string value, string label)
+    {
+        if (value.Length is < 1 or > 100 || value.Any(character => !(char.IsAsciiLetterOrDigit(character) || character is '.' or '-' or '_')))
+            throw new ToolException($"{label}格式无效。");
+        return value;
+    }
+
+    private static string LocalCoreFile(string value)
+    {
+        if (Path.GetFileName(value) != value || value.Length > 255)
+            throw new ToolException("本地核心文件名无效。");
+        return value;
+    }
+
+    private static string CoreFileName(string core, string version, Uri url)
+    {
+        var last = Path.GetFileName(url.AbsolutePath);
+        if (!string.IsNullOrWhiteSpace(last) && last.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) && last.Length <= 255)
+            return SafeFileName(last);
+        var suffix = string.Concat($"{core}-{version}.jar".Select(character => char.IsAsciiLetterOrDigit(character) || character is '.' or '-' or '_' ? character : '_'));
+        return SafeFileName(suffix.Length <= 255 ? suffix : suffix[..255]);
     }
 
     private object DeleteInstance(JsonElement args)
