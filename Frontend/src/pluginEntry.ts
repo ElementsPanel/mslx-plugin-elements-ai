@@ -1,6 +1,5 @@
 import ElementsAiPage from './views/ElementsAiPage.vue';
 import InstanceAiDialog from './views/InstanceAiDialog.vue';
-import { ChatIcon } from 'tdesign-icons-vue-next';
 
 export const pluginConfig = {
   name: 'ElementsAI',
@@ -23,10 +22,8 @@ export const pluginConfig = {
   ],
   extensions: [
     {
-      slot: 'instance-console-dropdown',
+      slot: 'instance-console-overview-bottom',
       component: InstanceAiDialog,
-      label: '询问 Elements AI',
-      icon: ChatIcon,
     },
   ],
 };

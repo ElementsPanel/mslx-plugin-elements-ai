@@ -370,6 +370,7 @@ Frontend/*.tsbuildinfo
 
 # Local plugin runtime data and environment overrides
 plugin-data/
+.mslx-dev/
 .env
 .env.*
 !.env.example
