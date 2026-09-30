@@ -1,6 +1,7 @@
 import request from 'mslx-request';
 import type {
   AiStatus,
+  AiTaskProgress,
   ChatEvent,
   ChatPreferences,
   ConversationDetail,
@@ -24,6 +25,14 @@ function token() {
 }
 
 export const getStatus = () => request.get({ url: `${base}/status` }) as Promise<AiStatus>;
+export async function getTaskProgress(taskId: string, signal: AbortSignal): Promise<AiTaskProgress> {
+  const response = await fetch(`${base}/tasks/${encodeURIComponent(taskId)}`, {
+    credentials: 'same-origin', signal, headers: { 'x-user-token': token() },
+  });
+  const body = await response.json();
+  if (!response.ok || body.code !== 200) throw new Error(body.message || `HTTP ${response.status}`);
+  return body.data;
+}
 export const savePreferences = (preferences: ChatPreferences) =>
   request.put({ url: `${base}/preferences`, data: preferences }) as Promise<boolean>;
 export const saveModel = (model: ModelInput) =>

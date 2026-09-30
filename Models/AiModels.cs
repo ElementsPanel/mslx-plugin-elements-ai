@@ -113,6 +113,7 @@ public sealed class ChatMessage
     public bool? Pending { get; set; }
     public FileDiff? Diff { get; set; }
     public NodeCommandResult? CommandResult { get; set; }
+    public AiTaskProgress? TaskProgress { get; set; }
     public ToolApproval? Approval { get; set; }
     public ToolQuestion? Question { get; set; }
     public string? Reasoning { get; set; }
@@ -196,6 +197,7 @@ public sealed class ToolExecutionResult
 {
     public object? Value { get; set; }
     public FileDiff? Diff { get; set; }
+    public AiTaskProgress? TaskProgress { get; set; }
     public bool Ok { get; set; } = true;
 }
 

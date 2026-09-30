@@ -12,6 +12,7 @@ var tests = new List<(string Name, Func<Task> Run)>
     {
         var rootServices = new ServiceCollection();
         rootServices.AddHttpClient();
+        rootServices.AddSingleton<MSLX.SDK.IServices.IBackgroundTaskManager, FakeTaskManager>();
         using var root = rootServices.BuildServiceProvider();
         var pluginServices = new ServiceCollection();
         foreach (var descriptor in rootServices)
@@ -23,6 +24,7 @@ var tests = new List<(string Name, Func<Task> Run)>
         new MSLXPluginEntry().OnRegisterServices(pluginServices);
         using var plugin = pluginServices.BuildServiceProvider();
         _ = plugin.GetRequiredService<NodeCommandService>();
+        _ = plugin.GetRequiredService<TaskProgressService>();
         return Task.CompletedTask;
     }),
     ("stdout, stderr and nonzero exit code", async () =>
@@ -50,7 +52,7 @@ var tests = new List<(string Name, Func<Task> Run)>
         var publicTools = MslxToolService.Definitions(false).ToJsonString();
         Check(!publicTools.Contains("execute_node_command") && !publicTools.Contains("list_nodes"), "admin tools exposed");
         Check(MslxToolService.SensitiveTools.Contains("execute_node_command"), "confirmation missing");
-        var tools = new MslxToolService(null!, null!, null!, new("user", false, "scope"), new(null, null, null), null!);
+        var tools = new MslxToolService(null!, null!, null!, new("user", false, "scope"), new(null, null, null), null!, null!);
         using var arguments = JsonDocument.Parse("{}");
         foreach (var name in new[] { "list_nodes", "execute_node_command" })
             await Throws<ToolException>(() => tools.ExecuteAsync(name, arguments.RootElement, null, default));
@@ -151,6 +153,7 @@ else
     }));
 }
 
+tests.AddRange(TaskProgressTests.Cases());
 foreach (var test in tests)
 {
     await test.Run();

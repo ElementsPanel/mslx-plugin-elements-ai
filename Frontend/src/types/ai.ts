@@ -21,6 +21,23 @@ export interface ToolQuestion {
   options: string[];
 }
 
+export interface AiTaskProgress {
+  taskId: string;
+  title: string;
+  state: 'pending' | 'running' | 'success' | 'failed' | 'canceled';
+  value: number | null;
+  message: string;
+  fileName?: string;
+  speed?: string;
+  instanceId?: number;
+  completed: boolean;
+  success: boolean;
+}
+
+export interface TaskProgressView extends AiTaskProgress {
+  unavailable?: boolean;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'tool' | 'error';
   content: string;
@@ -28,6 +45,7 @@ export interface ChatMessage {
   ok?: boolean;
   pending?: boolean;
   diff?: FileDiff;
+  taskProgress?: AiTaskProgress;
   commandResult?: {
     nodeId: string;
     workingDirectory: string;
@@ -92,6 +110,6 @@ export type ChatEvent =
   | { type: 'delta'; index: number; content: string }
   | { type: 'reasoning'; index: number; content: string }
   | { type: 'retry'; attempt: number; maxAttempts: number; delayMs: number }
-  | { type: 'progress'; tool: string; progress: { value?: number; speed?: string; fileName?: string } }
+  | { type: 'progress'; tool: string; progress: AiTaskProgress }
   | { type: 'done'; conversationId: string }
   | { type: 'error'; message: string };

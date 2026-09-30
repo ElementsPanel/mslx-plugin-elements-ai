@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Runtime.InteropServices;
 using System.Net;
+using System.Threading.Channels;
 using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Http;
 using MSLX.Plugin.ElementsAI.Models;
@@ -11,6 +12,7 @@ using MSLX.SDK;
 using MSLX.SDK.IServices;
 using MSLX.SDK.Models;
 using MSLX.SDK.Models.Resources;
+using MSLX.SDK.Models.Files;
 
 namespace MSLX.Plugin.ElementsAI.Services;
 
@@ -38,11 +40,12 @@ public sealed class MslxToolService(
     IUnifiedResourceService resources,
     UserContext user,
     MslxHostRequestContext hostRequest,
-    NodeCommandService nodeCommands)
+    NodeCommandService nodeCommands,
+    TaskProgressService tasks)
 {
     private const int MaxTextBytes = 64 * 1024;
     private const string MslApiBase = "https://api.mslmc.cn";
-    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.11";
+    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.12";
     private readonly Dictionary<string, string> _fileReads = new(StringComparer.Ordinal);
 
     public static readonly HashSet<string> SensitiveTools =
@@ -137,6 +140,10 @@ public sealed class MslxToolService(
                 ["overwrite"] = BooleanSchema()
             }), "instanceId", "source", "projectId", "versionId", "projectType")
         };
+        tools.Add(Define("wait_for_task", "Wait for an existing download or installation task belonging to the current account. Use the exact taskId from a tool receipt. Streams progress and returns completed, success and waitTimedOut. Timeout or stopping the wait does not cancel or restart the task. Call again if it is still running.", new JsonObject
+        {
+            ["taskId"] = StringSchema(32), ["timeoutSeconds"] = IntegerSchema(1, 300)
+        }, "taskId"));
         tools.Add(Define("list_msl_cores", "List server core identifiers supported by the official MSL source. This is read-only.", new JsonObject()));
         tools.Add(Define("list_msl_core_versions", "List exact Minecraft versions available for one official MSL server core. Call this before selecting a version.", new JsonObject
         {
@@ -197,11 +204,12 @@ public sealed class MslxToolService(
             "delete_file" => Result(DeleteFile(args)),
             "search_resources" => Result(await SearchResourcesAsync(args)),
             "list_resource_versions" => Result(await ListResourceVersionsAsync(args)),
-            "download_resource" => Result(await DownloadResourceAsync(args, onProgress, cancellationToken)),
+            "download_resource" => await DownloadResourceAsync(args, onProgress, cancellationToken),
+            "wait_for_task" => await WaitForTaskAsync(args, onProgress, cancellationToken),
             "list_msl_cores" => Result(await ListMslCoresAsync(cancellationToken)),
             "list_msl_core_versions" => Result(await ListMslCoreVersionsAsync(args, cancellationToken)),
             "list_msl_java_versions" => Result(await ListMslJavaVersionsAsync(cancellationToken)),
-            "create_instance" when user.IsAdmin => Result(await CreateInstanceAsync(args, cancellationToken)),
+            "create_instance" when user.IsAdmin => await CreateInstanceAsync(args, onProgress, cancellationToken),
             "delete_instance" when user.IsAdmin => Result(DeleteInstance(args)),
             _ => throw new ToolException("不支持的工具或当前账号没有权限。")
         };
@@ -514,7 +522,16 @@ public sealed class MslxToolService(
         };
     }
 
-    private async Task<object> DownloadResourceAsync(
+    private async Task<ToolExecutionResult> WaitForTaskAsync(
+        JsonElement args, Func<object, Task>? onProgress, CancellationToken cancellationToken)
+    {
+        var result = await tasks.WaitAsync(RequiredString(args, "taskId", 32), user,
+            OptionalInt(args, "timeoutSeconds", 60, 1, 300),
+            onProgress is null ? null : progress => onProgress(progress), cancellationToken);
+        return new ToolExecutionResult { Value = result, TaskProgress = result.Task, Ok = !result.Completed || result.Success };
+    }
+
+    private async Task<ToolExecutionResult> DownloadResourceAsync(
         JsonElement args,
         Func<object, Task>? onProgress,
         CancellationToken cancellationToken)
@@ -537,6 +554,16 @@ public sealed class MslxToolService(
         var target = Path.Combine(directory, fileName);
         if (File.Exists(target) && !overwrite) throw new ToolException("同名文件已存在；只有明确要求覆盖时才能覆盖。");
         var temp = target + "." + Guid.NewGuid().ToString("N") + ".download";
+        cancellationToken.ThrowIfCancellationRequested();
+        var (taskId, taskToken) = tasks.StartDownload(user, id, fileName);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, taskToken);
+        var updates = Channel.CreateBounded<AiTaskProgress>(new BoundedChannelOptions(1)
+        {
+            FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true
+        });
+        // A slow or disconnected SSE consumer must not hold up the SDK download callbacks.
+        var forwarding = ForwardProgressAsync(updates.Reader, onProgress);
+        updates.Writer.TryWrite(tasks.Read(taskId, user));
         try
         {
             var result = await SDK.MSLX.Downloader.DownloadFileAsync(
@@ -544,28 +571,68 @@ public sealed class MslxToolService(
                 temp,
                 (progress, speed) =>
                 {
-                    if (onProgress is not null) _ = onProgress(new { value = progress, speed, fileName });
+                    if (linked.IsCancellationRequested) return;
+                    tasks.Update(taskId, progress, "正在下载资源文件");
+                    updates.Writer.TryWrite(tasks.Read(taskId, user) with { Speed = speed });
                 },
                 500);
-            cancellationToken.ThrowIfCancellationRequested();
+            linked.Token.ThrowIfCancellationRequested();
             if (!result.Success) throw new ToolException("资源下载失败：" + result.ErrorMessage);
             AccessibleServer(id);
             File.Move(temp, target, overwrite);
-            return new
+            tasks.Complete(taskId, "文件已安装，尚未加载到运行中的实例。");
+            var final = tasks.Read(taskId, user);
+            updates.Writer.TryWrite(final);
+            return new ToolExecutionResult
             {
-                instanceId = id,
-                source = source.ToString().ToLowerInvariant(),
-                projectId,
-                versionId,
-                fileName,
-                path = Path.GetRelativePath(Path.GetFullPath(server.Base), target).Replace('\\', '/'),
-                completed = true,
-                loaded = false
+                TaskProgress = final,
+                Value = new
+                {
+                    taskId, instanceId = id,
+                    source = source.ToString().ToLowerInvariant(), projectId, versionId, fileName,
+                    path = Path.GetRelativePath(Path.GetFullPath(server.Base), target).Replace('\\', '/'),
+                    completed = true, success = true, loaded = false
+                }
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            tasks.Cancel(taskId, user);
+            var final = tasks.Read(taskId, user);
+            updates.Writer.TryWrite(final);
+            if (cancellationToken.IsCancellationRequested) throw;
+            return new ToolExecutionResult
+            {
+                Ok = false, TaskProgress = final,
+                Value = new { taskId, completed = true, success = false, canceled = true, error = final.Message }
+            };
+        }
+        catch (Exception exception)
+        {
+            tasks.Fail(taskId, exception is ToolException ? exception.Message : "资源下载或安装失败。");
+            var final = tasks.Read(taskId, user);
+            updates.Writer.TryWrite(final);
+            return new ToolExecutionResult
+            {
+                Ok = false, TaskProgress = final,
+                Value = new { taskId, completed = true, success = false, error = final.Message }
             };
         }
         finally
         {
-            if (File.Exists(temp)) File.Delete(temp);
+            updates.Writer.TryComplete();
+            try { if (File.Exists(temp)) File.Delete(temp); }
+            finally { await forwarding; }
+        }
+    }
+
+    private static async Task ForwardProgressAsync(ChannelReader<AiTaskProgress> reader, Func<object, Task>? onProgress)
+    {
+        await foreach (var progress in reader.ReadAllAsync())
+        {
+            if (onProgress is null) continue;
+            try { await onProgress(progress); }
+            catch { onProgress = null; } // The task status remains available through the authenticated polling API.
         }
     }
 
@@ -589,7 +656,8 @@ public sealed class MslxToolService(
         return new { source = "msl", os, arch, versions = data };
     }
 
-    private async Task<object> CreateInstanceAsync(JsonElement args, CancellationToken cancellationToken)
+    private async Task<ToolExecutionResult> CreateInstanceAsync(
+        JsonElement args, Func<object, Task>? onProgress, CancellationToken cancellationToken)
     {
         var name = RequiredString(args, "name", 100);
         var source = OptionalString(args, "coreSource", 20).ToLowerInvariant();
@@ -644,15 +712,32 @@ public sealed class MslxToolService(
                 ignoreEula = OptionalBoolean(args, "ignoreEula", false)
             };
             var response = await CreateHostInstanceAsync(payload, cancellationToken);
-            return new
+            AiTaskProgress? progress = null;
+            uint? instanceId = null;
+            string? trackingError = null;
+            try
             {
-                source = "msl",
-                core,
-                coreVersion = version,
-                javaVersion,
-                coreFile = mslCoreFile,
-                coreUrl,
-                instance = response
+                instanceId = response["serverId"]?.GetValue<uint>();
+                if (instanceId is null) throw new ToolException("创建回执缺少实例 ID。");
+                progress = await FindCreationTaskAsync(instanceId.Value);
+            }
+            catch (Exception)
+            {
+                // Submission already succeeded. Never invite a duplicate creation after a tracking failure.
+                trackingError = "创建任务已提交，但暂时无法获取进度；请在 MSLX 任务列表确认状态，不要重复创建。";
+            }
+            if (progress is not null && onProgress is not null) await onProgress(progress);
+            return new ToolExecutionResult
+            {
+                TaskProgress = progress,
+                Ok = progress is null || !progress.Completed || progress.Success,
+                Value = new
+                {
+                    source = "msl", core, coreVersion = version, javaVersion,
+                    coreFile = mslCoreFile, coreUrl, instance = response,
+                    instanceId, taskId = progress?.TaskId, submitted = true,
+                    completed = progress?.Completed ?? false, success = progress?.Success ?? false, trackingError
+                }
             };
         }
 
@@ -667,7 +752,20 @@ public sealed class MslxToolService(
             Args = OptionalString(args, "args", 4096), IgnoreEula = OptionalBoolean(args, "ignoreEula", false)
         };
         if (!SDK.MSLX.Config.Servers.CreateServer(server)) throw new ToolException("创建实例失败。");
-        return new { source = "local", instanceId = id, created = true, started = false, name, basePath };
+        return Result(new { source = "local", instanceId = id, created = true, started = false, name, basePath });
+    }
+
+    private async Task<AiTaskProgress> FindCreationTaskAsync(uint instanceId)
+    {
+        var response = await SDK.MSLX.Http.GetAsync(
+            $"{hostRequest.BaseUrl}/api/tasks?instanceId={instanceId}", null!,
+            new Dictionary<string, string> { ["x-user-token"] = hostRequest.Token! }, TimeSpan.FromSeconds(10));
+        if (!response.IsSuccessStatusCode) throw new ToolException("无法读取任务列表。");
+        var items = ParseApiResponse(response.Content).Deserialize<List<BackgroundTaskItem>>(new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var task = items?.Where(item => item.InstanceId == instanceId && item.UserId == user.UserId && item.Type == TaskType.CreateServer)
+            .OrderByDescending(item => item.CreatedAt).FirstOrDefault()
+            ?? throw new ToolException("未找到实例创建任务。");
+        return tasks.Read(task.Id, user);
     }
 
     private async Task<JsonNode> MslGetDataAsync(string path, CancellationToken cancellationToken)
@@ -686,6 +784,7 @@ public sealed class MslxToolService(
 
     private async Task<JsonNode> CreateHostInstanceAsync(object payload, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var token = hostRequest.Token;
         if (string.IsNullOrWhiteSpace(token)) throw new ToolException("未提供认证凭证，无法提交 MSLX 创建任务。");
         var baseUrl = hostRequest.BaseUrl;
@@ -699,7 +798,7 @@ public sealed class MslxToolService(
             payload,
             headers,
             TimeSpan.FromSeconds(30));
-        cancellationToken.ThrowIfCancellationRequested();
+        // Preserve an accepted submission so its task ID can still be saved if the chat was stopped.
         if (!response.IsSuccessStatusCode)
             throw new ToolException($"MSLX 创建任务失败（HTTP {response.StatusCode}）：{ExtractApiMessage(response.Content)}");
         return ParseApiResponse(response.Content);

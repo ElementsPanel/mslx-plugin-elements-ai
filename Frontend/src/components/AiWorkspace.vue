@@ -29,6 +29,8 @@ import FileDiffView from './FileDiff.vue';
 import MarkdownMessage from './MarkdownMessage.vue';
 import ToolReceipt from './ToolReceipt.vue';
 import ThinkingLine from './ThinkingLine.vue';
+import TaskProgressList from './TaskProgressList.vue';
+import { useTaskProgress } from '../composables/useTaskProgress';
 
 const props = withDefaults(defineProps<{ currentInstanceId?: number; compact?: boolean }>(), {
   compact: false,
@@ -47,7 +49,8 @@ const loading = ref(false);
 const checking = ref(false);
 const error = ref('');
 const retryText = ref('');
-const progressText = ref('');
+const taskProgress = useTaskProgress();
+const activeTasks = taskProgress.tasks;
 const view = ref<'chat' | 'history' | 'settings'>('chat');
 const list = ref<HTMLElement>();
 const controller = ref<AbortController>();
@@ -94,7 +97,7 @@ function reset(clearDraft = false) {
   loading.value = false;
   error.value = '';
   retryText.value = '';
-  progressText.value = '';
+  taskProgress.reset();
   approvalSubmitting.value = '';
   questionSubmitting.value = '';
   if (clearDraft) draft.value = '';
@@ -134,6 +137,7 @@ function applyEvent(event: ChatEvent) {
     while (messages.value.length <= event.index)
       messages.value.push({ role: 'assistant', content: '', pending: true });
     messages.value[event.index] = event.message;
+    taskProgress.track(event.message.taskProgress);
   } else if (event.type === 'delta') {
     const message = messages.value[event.index];
     if (message) message.content += event.content;
@@ -143,13 +147,10 @@ function applyEvent(event: ChatEvent) {
   } else if (event.type === 'retry') {
     retryText.value = `模型连接失败，正在进行第 ${event.attempt}/${event.maxAttempts} 次重试…`;
   } else if (event.type === 'progress') {
-    const value = event.progress.value === undefined ? '' : ` ${Math.round(event.progress.value)}%`;
-    const speed = event.progress.speed ? ` · ${event.progress.speed}` : '';
-    progressText.value = `${toolLabel(event.tool)}${value}${speed}`;
+    taskProgress.track(event.progress);
   } else if (event.type === 'done') {
     conversationId.value = event.conversationId;
     retryText.value = '';
-    progressText.value = '';
   }
   void scrollToEnd();
 }
@@ -161,7 +162,7 @@ async function send() {
   loading.value = true;
   error.value = '';
   retryText.value = '';
-  progressText.value = '';
+  taskProgress.beginTurn();
   const active = new AbortController();
   controller.value = active;
   try {
@@ -172,18 +173,19 @@ async function send() {
       permissionMode.value,
       props.currentInstanceId,
       active.signal,
-      applyEvent,
+      (event) => { if (controller.value === active && !active.signal.aborted) applyEvent(event); },
     );
   } catch (err) {
-    if (!active.signal.aborted) {
+    if (controller.value === active && !active.signal.aborted) {
       error.value = messageOf(err);
       messages.value.push({ role: 'error', content: error.value });
     }
   } finally {
-    if (controller.value === active) controller.value = undefined;
-    loading.value = false;
-    retryText.value = '';
-    progressText.value = '';
+    if (controller.value === active) {
+      controller.value = undefined;
+      loading.value = false;
+      retryText.value = '';
+    }
     await scrollToEnd();
   }
 }
@@ -244,6 +246,7 @@ async function openConversationItem(id: string) {
   try {
     const conversation = await getConversation(id);
     messages.value = conversation.messages;
+    taskProgress.restore(conversation.messages);
     conversationId.value = conversation.id;
     if (models.value.some((model) => model.id === conversation.modelId))
       selectedModel.value = conversation.modelId;
@@ -382,6 +385,7 @@ function toolLabel(name?: string) {
     create_file: '创建文件', delete_file: '删除文件', search_resources: '搜索资源',
     list_resource_versions: '查询资源版本', download_resource: '下载资源', list_msl_cores: '查询 MSL 核心',
     list_msl_core_versions: '查询核心版本', list_msl_java_versions: '查询 Java 版本',
+    wait_for_task: '等待任务完成',
   };
   return name ? labels[name] || name : '工具';
 }
@@ -404,7 +408,7 @@ watch(authToken, (next, previous) => {
 });
 
 onMounted(refreshStatus);
-onBeforeUnmount(() => controller.value?.abort());
+onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
 </script>
 
 <template>
@@ -472,11 +476,11 @@ onBeforeUnmount(() => controller.value?.abort());
         </article>
       </main>
 
-      <div v-if="retryText || progressText" class="activity-strip">
-        <span v-if="retryText">{{ retryText }}</span>
-        <span v-if="progressText">{{ progressText }}</span>
+      <div v-if="retryText" class="activity-strip">
+        <span>{{ retryText }}</span>
       </div>
       <div v-if="error" class="error-strip">{{ error }}</div>
+      <TaskProgressList :tasks="activeTasks" />
 
       <footer class="composer">
         <div class="composer-controls">

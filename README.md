@@ -15,6 +15,7 @@
 - 实例目录内受限的文件列表、读取、哈希校验编辑、创建、删除与差异预览
 - MSLX 内置 Modrinth / CurseForge 资源检索、版本查询和模组/插件下载
 - 官方 MSL 服务端源核心列表、版本查询，以及通过 MSL 在线下载核心和 Java 创建实例
+- 输入框上方显示下载与安装进度，支持通过 `wait_for_task` 等待后台任务完成
 - 全局页眉右侧按钮，以及覆盖页面内容的 AI 侧边栏
 
 ## 安全约束
@@ -46,10 +47,11 @@ dotnet build MSLX.Plugin.ElementsAI.csproj -c Release
 
 Release 构建会将依赖合并为插件 DLL，并嵌入 `Frontend/dist` 产物。
 
-节点命令回归测试（Linux/macOS 包含进程超时、取消和输出截断检查；远程请求使用模拟响应）：
+回归测试（节点命令、任务等待和账号隔离使用本地进程或模拟响应；前端检查进度轮询与显示）：
 
 ```bash
 dotnet run --project Tests/NodeCommands/NodeCommands.csproj
+node Tests/Frontend/taskProgress.cjs
 ```
 
 ## 使用
@@ -59,6 +61,8 @@ dotnet run --project Tests/NodeCommands/NodeCommands.csproj
 3. 默认模式会在文件写入、命令发送、实例配置变更、资源下载等敏感操作前展示精确参数并等待确认。
 
 管理员可让 AI 先查询 MSL 核心和版本，再使用 `coreSource=msl` 创建实例。创建参数中的 `javaVersion` 支持 `8`、`11`、`17`、`21`、`25`，MSLX 会在后台下载对应 Java 和服务端核心；MSLX 运行在 Docker 中时可省略 `basePath` 使用默认实例目录，创建任务不会自动启动实例。
+
+下载模组/插件或在线创建实例时，输入框上方会显示任务名称、阶段和进度；AI 回复结束后仍会更新后台安装状态。工具回执包含 `taskId`，AI 可调用“等待任务完成”（`wait_for_task`），传入该 ID 和可选的 `timeoutSeconds`（默认 60 秒，范围 1–300 秒）。等待超时会返回尚未完成，停止等待不会取消后台安装。任务进度只对创建任务的账号可见，历史对话会恢复尚未完成任务的查询；宿主已清理的任务会显示状态暂不可用。
 
 管理员也可以要求“在当前节点执行 `uname -a`”。AI 会先通过 `list_nodes` 查询节点，再调用 `execute_node_command`，参数为 `nodeId`、`command`，可选 `workingDirectory`（节点上的绝对路径，默认为 MSLX 程序目录）和 `timeoutSeconds`（默认 30 秒，范围 1–120 秒）。`local` 表示主机节点；远程节点必须已登记在 MSLX 中，并安装、启用新版 Elements AI 插件。命令使用 Linux/macOS 的 `/bin/sh` 或 Windows 的 `cmd.exe`，不支持交互输入和后台任务。超时或停止请求时终止仍在运行的进程树，标准输出和错误各最多保留 16000 个字符。连接中断时执行状态可能未知，应核实结果后再操作。
 

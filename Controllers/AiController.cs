@@ -16,8 +16,12 @@ namespace MSLX.Plugin.ElementsAI.Controllers;
 [Authorize]
 [AiExceptionFilter]
 [Route("api/plugins/mslx-plugin-elements-ai/ai")]
-public sealed class AiController(AiDataStore store, AiChatService chat) : ControllerBase
+public sealed class AiController(AiDataStore store, AiChatService chat, TaskProgressService tasks) : ControllerBase
 {
+    [HttpGet("tasks/{taskId}")]
+    public ActionResult<ApiResponse<AiTaskProgress>> TaskProgress(string taskId) =>
+        Ok(Packet(tasks.Read(taskId, CurrentUser())));
+
     [HttpGet("status")]
     public async Task<ActionResult<ApiResponse<AiStatus>>> Status(CancellationToken cancellationToken)
     {
