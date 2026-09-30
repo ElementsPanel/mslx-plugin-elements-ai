@@ -597,7 +597,7 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
 .empty-state { min-height: 100%; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--td-text-color-secondary); }
 .empty-state h2 { margin: 0.4rem 0; color: var(--td-text-color-primary); }
 .empty-state p { max-width: 560px; margin: 0; line-height: 1.7; }
-.empty-mark { display: grid; place-content: center; width: 62px; height: 62px; border-radius: 20px; background: color-mix(in srgb, var(--td-brand-color) 13%, transparent); color: var(--td-brand-color); font-size: 30px; }
+.empty-mark { display: grid; place-content: center; width: 62px; height: 62px; color: var(--td-brand-color); font-size: 30px; }
 .context-hint { margin-top: 1rem; padding: 0.45rem 0.7rem; border: 1px solid var(--td-component-border); border-radius: 999px; font-size: 12px; }
 .message-row { display: flex; margin: 0.8rem 0; }
 .message-row.user { justify-content: flex-end; }
