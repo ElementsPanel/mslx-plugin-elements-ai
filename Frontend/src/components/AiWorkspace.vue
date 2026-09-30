@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
-import { SendIcon } from 'tdesign-icons-vue-next';
+import { SendIcon, StopIcon } from 'tdesign-icons-vue-next';
 import {
   deleteConversations,
   deleteModel,
@@ -548,8 +548,8 @@ onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgres
           <textarea v-model="draft" maxlength="4000" rows="3" :disabled="loading || !status?.ready" placeholder="输入你的需求；Shift+Enter 换行" @keydown="keydown"></textarea>
           <div class="input-footer">
             <span>{{ draft.length }} / 4000</span>
-            <t-button v-if="loading" theme="danger" variant="outline" size="small" @click="stop">停止</t-button>
-            <t-button v-else size="small" shape="square" aria-label="发送" title="发送" :disabled="!canSend" @click="send"><SendIcon size="18px" /></t-button>
+            <t-button v-if="loading" class="composer-action" theme="danger" variant="text" size="small" shape="square" aria-label="停止" title="停止" @click="stop"><StopIcon size="18px" /></t-button>
+            <t-button v-else class="composer-action" variant="text" size="small" shape="square" aria-label="发送" title="发送" :disabled="!canSend" @click="send"><SendIcon size="18px" /></t-button>
           </div>
         </div>
         <div class="composer-controls">
@@ -689,6 +689,8 @@ onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgres
 .input-shell { border: 1px solid var(--td-component-border); border-radius: 13px; overflow: hidden; transition: border-color .2s; }.input-shell:focus-within { border-color: var(--td-brand-color); }
 .input-shell textarea { width: 100%; box-sizing: border-box; resize: none; border: 0; outline: 0; padding: 0.75rem; color: var(--td-text-color-primary); background: transparent; font: inherit; }
 .input-footer { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.55rem 0.5rem; color: var(--td-text-color-placeholder); font-size: 11px; }
+.input-footer .composer-action { background: transparent; border-color: transparent; }
+.input-footer .composer-action:focus-visible { outline: 2px solid var(--td-brand-color); outline-offset: 2px; }
 .panel-view { flex: 1; overflow-y: auto; padding: 1.2rem; background: var(--td-bg-color-page); }
 .panel-heading, .section-heading, .settings-card, .model-card { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .panel-heading { padding-bottom: 1rem; border-bottom: 1px solid var(--td-component-border); }.panel-heading h2, .section-heading h3, .settings-card h3 { margin: 0; }.panel-heading p, .section-heading p, .settings-card p { margin: 0.25rem 0 0; color: var(--td-text-color-secondary); font-size: 12px; }
