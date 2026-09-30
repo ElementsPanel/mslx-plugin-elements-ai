@@ -63,6 +63,7 @@ function compile(file, inlineTemplate = false) {
   new Function('require', 'exports', 'window', compile('AiWorkspace.vue'))((name) => {
     if (name === 'vue') return hooks;
     if (name === '../api') return {};
+    if (name === 'tdesign-icons-vue-next') return {};
     if (name === 'tdesign-vue-next') return {};
     if (name === '../composables/useTaskProgress') return { useTaskProgress: () => ({ tasks: vue.ref([]), track() {} }) };
     if (name.endsWith('.vue')) return {};

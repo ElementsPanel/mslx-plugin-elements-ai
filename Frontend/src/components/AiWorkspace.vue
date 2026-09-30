@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
+import { SendIcon } from 'tdesign-icons-vue-next';
 import {
   deleteConversations,
   deleteModel,
@@ -42,6 +43,9 @@ const authToken = computed(() => hostUserStore?.token || '');
 const status = ref<AiStatus>();
 const selectedModel = ref('');
 const permissionMode = ref<PermissionMode>('default');
+let selectionUserId = '';
+let selectionToken = '';
+let statusSequence = 0;
 const messages = ref<ChatMessage[]>([]);
 const conversationId = ref<string>();
 const draft = ref('');
@@ -110,20 +114,47 @@ function newChat() {
 }
 
 async function refreshStatus() {
+  const sequence = ++statusSequence;
+  const requestToken = authToken.value;
   checking.value = true;
   error.value = '';
   try {
     const next = await getStatus();
+    if (sequence !== statusSequence || requestToken !== authToken.value) return;
     status.value = next;
     sendOnEnter.value = next.preferences?.sendOnEnter ?? true;
+    if (selectionUserId !== next.userId || selectionToken !== requestToken) {
+      let saved: { modelId?: unknown; permissionMode?: unknown } | null = null;
+      try { saved = JSON.parse(window.localStorage.getItem(selectionKey(next.userId)) || 'null'); } catch { }
+      selectedModel.value = typeof saved?.modelId === 'string' ? saved.modelId : '';
+      permissionMode.value = saved?.permissionMode === 'full' ? 'full' : 'default';
+      selectionUserId = next.userId;
+      selectionToken = requestToken;
+    }
     if (!next.models.some((model) => model.id === selectedModel.value))
       selectedModel.value = next.models[0]?.id || '';
+    rememberSelection();
   } catch (err) {
-    error.value = messageOf(err);
+    if (sequence === statusSequence && requestToken === authToken.value) error.value = messageOf(err);
   } finally {
-    checking.value = false;
+    if (sequence === statusSequence) checking.value = false;
   }
 }
+
+function selectionKey(userId: string) {
+  return `mslx-elements-ai:selection:${encodeURIComponent(userId)}`;
+}
+
+function rememberSelection() {
+  if (!selectionUserId || status.value?.userId !== selectionUserId || selectionToken !== authToken.value) return;
+  try {
+    window.localStorage.setItem(selectionKey(selectionUserId), JSON.stringify({
+      modelId: selectedModel.value, permissionMode: permissionMode.value,
+    }));
+  } catch { /* Browser storage restrictions must not prevent chatting. */ }
+}
+
+watch([selectedModel, permissionMode], rememberSelection);
 
 async function scrollToEnd() {
   await nextTick();
@@ -183,16 +214,36 @@ async function send() {
     }
   } finally {
     if (controller.value === active) {
+      clearPendingMessages();
       controller.value = undefined;
       loading.value = false;
       retryText.value = '';
+      await scrollToEnd();
     }
-    await scrollToEnd();
   }
+}
+
+function clearPendingMessages() {
+  for (const message of messages.value) {
+    if (!message.pending) continue;
+    message.pending = false;
+    message.approval = undefined;
+    message.question = undefined;
+    if (message.role === 'tool') {
+      message.ok = false;
+      if (!message.content) message.content = '请求已停止。';
+    }
+  }
+  approvalSubmitting.value = '';
+  questionSubmitting.value = '';
 }
 
 function stop() {
   controller.value?.abort();
+  controller.value = undefined;
+  loading.value = false;
+  retryText.value = '';
+  clearPendingMessages();
 }
 
 function keydown(event: KeyboardEvent) {
@@ -384,9 +435,10 @@ function toolLabel(name?: string) {
     control_instance: '控制实例', send_command: '发送命令', update_instance: '更新实例', create_instance: '创建实例',
     delete_instance: '删除实例', list_files: '列出文件', read_file: '读取文件', edit_file: '编辑文件',
     create_file: '创建文件', delete_file: '删除文件', search_resources: '搜索资源',
-    list_resource_versions: '查询资源版本', download_resource: '下载资源', list_msl_cores: '查询 MSL 核心',
-    list_msl_core_versions: '查询核心版本', list_msl_java_versions: '查询 Java 版本',
+    list_resource_versions: '查询资源版本', download_resource: '下载资源', list_msl_cores: 'MSL镜像源：查询核心',
+    list_msl_core_versions: 'MSL镜像源：查询核心版本', list_msl_java_versions: 'MSL镜像源：查询 Java 版本',
     wait_for_task: '等待任务完成',
+    wait_for_terminal_update: '等待终端内容更新',
   };
   return name ? labels[name] || name : '工具';
 }
@@ -404,12 +456,18 @@ function messageOf(value: unknown) {
 watch(authToken, (next, previous) => {
   if (next === previous) return;
   reset(true);
+  statusSequence++;
+  selectionUserId = '';
+  selectionToken = '';
   status.value = undefined;
+  selectedModel.value = '';
+  permissionMode.value = 'default';
+  checking.value = false;
   if (next) void refreshStatus();
 });
 
 onMounted(refreshStatus);
-onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
+onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgress.reset(); });
 </script>
 
 <template>
@@ -486,6 +544,14 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
       <TaskProgressList :tasks="activeTasks" />
 
       <footer class="composer">
+        <div class="input-shell">
+          <textarea v-model="draft" maxlength="4000" rows="3" :disabled="loading || !status?.ready" placeholder="输入你的需求；Shift+Enter 换行" @keydown="keydown"></textarea>
+          <div class="input-footer">
+            <span>{{ draft.length }} / 4000</span>
+            <t-button v-if="loading" theme="danger" variant="outline" size="small" @click="stop">停止</t-button>
+            <t-button v-else size="small" shape="square" aria-label="发送" title="发送" :disabled="!canSend" @click="send"><SendIcon size="18px" /></t-button>
+          </div>
+        </div>
         <div class="composer-controls">
           <label>
             <span>操作模式</span>
@@ -501,14 +567,6 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
               <option v-for="model in models" :key="model.id" :value="model.id">{{ model.name }} · {{ model.model }}</option>
             </select>
           </label>
-        </div>
-        <div class="input-shell">
-          <textarea v-model="draft" maxlength="4000" rows="3" :disabled="loading || !status?.ready" placeholder="输入你的需求；Shift+Enter 换行" @keydown="keydown"></textarea>
-          <div class="input-footer">
-            <span>{{ draft.length }} / 4000</span>
-            <t-button v-if="loading" theme="danger" variant="outline" size="small" @click="stop">停止</t-button>
-            <t-button v-else size="small" :disabled="!canSend" @click="send">发送</t-button>
-          </div>
         </div>
       </footer>
     </template>
@@ -627,7 +685,7 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
 .error-strip { color: var(--td-error-color); background: color-mix(in srgb, var(--td-error-color) 9%, var(--td-bg-color-container)); border: 1px solid color-mix(in srgb, var(--td-error-color) 28%, transparent); }
 .activity-strip, .error-strip { padding: 0.45rem 1.25rem; font-size: 12px; }.activity-strip { display: flex; justify-content: space-between; color: var(--td-brand-color); border-top: 1px solid var(--td-component-border); }
 .composer { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--td-component-border); background: var(--td-bg-color-container); }
-.composer-controls { display: flex; gap: 0.75rem; margin-bottom: 0.55rem; }.composer-controls label { display: flex; align-items: center; gap: 0.4rem; font-size: 12px; color: var(--td-text-color-secondary); }.composer-controls .model-select { flex: 1; }.composer-controls select { min-width: 130px; }.model-select select { width: min(420px, 100%); }
+.composer-controls { display: flex; gap: 0.75rem; margin-top: 0.55rem; }.composer-controls label { display: flex; align-items: center; gap: 0.4rem; font-size: 12px; color: var(--td-text-color-secondary); }.composer-controls .model-select { flex: 1; min-width: 0; }.composer-controls select { min-width: 130px; }.model-select select { width: min(420px, 100%); }
 .input-shell { border: 1px solid var(--td-component-border); border-radius: 13px; overflow: hidden; transition: border-color .2s; }.input-shell:focus-within { border-color: var(--td-brand-color); }
 .input-shell textarea { width: 100%; box-sizing: border-box; resize: none; border: 0; outline: 0; padding: 0.75rem; color: var(--td-text-color-primary); background: transparent; font: inherit; }
 .input-footer { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.55rem 0.5rem; color: var(--td-text-color-placeholder); font-size: 11px; }

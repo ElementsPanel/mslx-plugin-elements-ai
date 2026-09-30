@@ -26,6 +26,7 @@ const exports_ = {};
 new Function('require', 'exports', 'window', code)((name) => {
   if (name === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {} };
   if (name === '../api') return api;
+  if (name === 'tdesign-icons-vue-next') return {};
   if (name === 'tdesign-vue-next') return { DialogPlugin: {}, MessagePlugin: { success() {}, error: (error) => errors.push(error) } };
   if (name === '../composables/useTaskProgress') return { useTaskProgress: () => ({ tasks: vue.ref([]) }) };
   if (name.endsWith('.vue')) return {};
@@ -64,4 +65,9 @@ const existing = (source) => ({ id: source + ':' + 'a'.repeat(24), name: 'Existi
   assert.equal(saves.at(-1).input.id, 'a'.repeat(24), 'editing no longer targets the original model');
   assert.deepEqual(errors, []);
   console.log('PASS editing an existing model still submits its ID');
+  for (const name of ['list_msl_cores', 'list_msl_core_versions', 'list_msl_java_versions'])
+    assert.ok(form.toolLabel(name).startsWith('MSL镜像源：'));
+  assert.equal(form.toolLabel('wait_for_terminal_update'), '等待终端内容更新');
+  assert.equal(form.toolLabel('search_resources'), '搜索资源');
+  console.log('PASS tool labels identify MSL queries and terminal waiting');
 })().catch((error) => { console.error(error); process.exitCode = 1; }).finally(() => scope.stop());
