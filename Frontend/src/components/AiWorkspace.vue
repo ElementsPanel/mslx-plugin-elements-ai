@@ -435,7 +435,7 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
       <main ref="list" class="message-list">
         <div v-if="!messages.length" class="empty-state">
           <div class="empty-mark">✦</div>
-          <h2>今天想管理什么？</h2>
+          <h2>有什么可以帮你？</h2>
           <p v-if="status?.ready">我可以检查实例状态、分析终端、修改配置文件，以及搜索和下载模组。</p>
           <p v-else>尚未配置模型。请先在“设置”中添加个人模型，或让管理员添加预设模型。</p>
           <div v-if="currentInstanceId" class="context-hint">当前上下文会优先使用实例 #{{ currentInstanceId }}</div>
@@ -447,7 +447,9 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
           <div v-else-if="message.role === 'assistant'" class="assistant-message">
             <ThinkingLine v-if="message.reasoning" :content="message.reasoning" :pending="message.pending" />
             <MarkdownMessage v-if="message.content" :content="message.content" />
-            <div v-else-if="message.pending && !message.reasoning" class="typing"><span></span><span></span><span></span></div>
+            <div v-else-if="message.pending && !message.reasoning" class="working-indicator" role="status">
+              <span class="braille-spinner" aria-hidden="true"></span><span>工作中</span>
+            </div>
           </div>
 
           <div v-else-if="message.role === 'tool'" class="tool-row" :class="{ failed: message.ok === false }">
@@ -571,7 +573,7 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
     <t-dialog v-model:visible="modelDialog" :header="modelDraft.id ? '编辑模型' : '添加模型'" attach="body" width="560px" :confirm-btn="null" :cancel-btn="null">
       <form class="model-form" @submit.prevent="persistModel">
         <label><span>显示名称</span><input v-model="modelDraft.name" maxlength="100" required placeholder="例如：GPT-5" /></label>
-        <label><span>接口地址</span><input v-model="modelDraft.endpoint" maxlength="2048" required placeholder="https://api.example.com/v1/chat/completions" /></label>
+        <label><span>接口基础地址</span><input v-model="modelDraft.endpoint" maxlength="2048" required placeholder="https://api.example.com/v1" /></label>
         <label><span>模型标识</span><input v-model="modelDraft.model" maxlength="200" required placeholder="模型名称" /></label>
         <label><span>API Key</span><input v-model="modelDraft.apiKey" maxlength="4096" type="password" :placeholder="modelDraft.id ? '留空以保留现有密钥' : '可留空'" /></label>
         <label v-if="modelDraft.id && modelDraft.apiKey === ''" class="check-line"><input v-model="modelDraft.clearApiKey" type="checkbox" /> 清除已保存的 API Key</label>
@@ -596,7 +598,7 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
 .header-actions, .inline-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .message-list { flex: 1; overflow-y: auto; padding: 1.2rem clamp(0.8rem, 3vw, 3rem); background: color-mix(in srgb, var(--td-bg-color-page) 55%, var(--td-bg-color-container)); }
 .empty-state { min-height: 100%; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--td-text-color-secondary); }
-.empty-state h2 { margin: 0.4rem 0; color: var(--td-text-color-primary); }
+.empty-state h2 { margin: 0.4rem 0; color: var(--td-text-color-primary); font-size: 28px; font-weight: 700; line-height: 1.4; }
 .empty-state p { max-width: 560px; margin: 0; line-height: 1.7; }
 .empty-mark { display: grid; place-content: center; width: 62px; height: 62px; color: var(--td-brand-color); font-size: 30px; }
 .context-hint { margin-top: 1rem; padding: 0.45rem 0.7rem; border: 1px solid var(--td-component-border); border-radius: 999px; font-size: 12px; }
@@ -605,10 +607,15 @@ onBeforeUnmount(() => { controller.value?.abort(); taskProgress.reset(); });
 .message-bubble { max-width: min(780px, 86%); border-radius: 14px; padding: 0.75rem 0.9rem; }
 .user-bubble { white-space: pre-wrap; color: var(--td-text-color-anti); background: var(--td-brand-color); border-bottom-right-radius: 5px; }
 .assistant-message { width: min(780px, 92%); }
-.typing { display: flex; gap: 4px; padding: 0.35rem; }
-.typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--td-brand-color); animation: pulse 1s infinite alternate; }
-.typing span:nth-child(2) { animation-delay: .2s; }.typing span:nth-child(3) { animation-delay: .4s; }
-@keyframes pulse { to { opacity: .25; transform: translateY(-3px); } }
+.working-indicator { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem; color: var(--td-text-color-secondary); font-size: 14px; }
+.braille-spinner { flex-shrink: 0; width: 1em; color: var(--td-brand-color); font-family: ui-monospace, monospace; font-size: 18px; line-height: 1; }
+.braille-spinner::before { content: '⠋'; animation: braille-spin 0.8s steps(1, end) infinite; }
+@keyframes braille-spin {
+  0%, 100% { content: '⠋'; } 10% { content: '⠙'; } 20% { content: '⠹'; }
+  30% { content: '⠸'; } 40% { content: '⠼'; } 50% { content: '⠴'; }
+  60% { content: '⠦'; } 70% { content: '⠧'; } 80% { content: '⠇'; } 90% { content: '⠏'; }
+}
+@media (prefers-reduced-motion: reduce) { .braille-spinner::before { animation: none; } }
 .tool-row { width: min(780px, 92%); padding: 0.25rem 0; }
 .tool-row.failed { color: var(--td-error-color); }
 .approval-box, .question-box { margin-top: 0.65rem; padding: 0.7rem 0.8rem; border-left: 2px solid var(--td-component-border); color: var(--td-text-color-secondary); }

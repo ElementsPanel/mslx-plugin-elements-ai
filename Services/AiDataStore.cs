@@ -85,7 +85,7 @@ public sealed class AiDataStore
         {
             Id = model.Id,
             Name = model.Name,
-            Endpoint = model.Endpoint,
+            Endpoint = ModelEndpoint.NormalizeBase(model.Endpoint),
             Model = model.Model,
             ApiKey = model.ApiKey,
             ThinkingEnabled = model.ThinkingEnabled,
@@ -348,7 +348,7 @@ public sealed class AiDataStore
             Name = model.Name,
             Model = model.Model,
             Source = source,
-            Endpoint = source == "personal" || includeEndpoint ? model.Endpoint : null,
+            Endpoint = source == "personal" || includeEndpoint ? ModelEndpoint.NormalizeBase(model.Endpoint) : null,
             HasApiKey = source == "personal" || includeEndpoint ? !string.IsNullOrEmpty(model.ApiKey) : null,
             ThinkingEnabled = model.ThinkingEnabled,
             ThinkingEffort = model.ThinkingEffort
@@ -370,18 +370,13 @@ public sealed class AiDataStore
     private static SavedModel ValidateModel(ModelInput input, SavedModel? previous)
     {
         var name = input.Name.Trim();
-        var endpoint = input.Endpoint.Trim();
+        var endpoint = ModelEndpoint.NormalizeBase(input.Endpoint);
         var model = input.Model.Trim();
         var key = input.ApiKey.Trim();
         if (name.Length is < 1 or > 100 || model.Length is < 1 or > 200)
             throw new AiValidationException("模型名称或模型标识无效。");
         if (key.Length > 4096 || key.Contains('\r') || key.Contains('\n'))
             throw new AiValidationException("API Key 无效。");
-        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
-            !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Query) ||
-            !string.IsNullOrEmpty(uri.Fragment) || endpoint.Length > 2048)
-            throw new AiValidationException("模型接口地址无效。");
         if (input.ThinkingEffort is not ("low" or "medium" or "high"))
             throw new AiValidationException("思考强度无效。");
 
@@ -393,7 +388,8 @@ public sealed class AiDataStore
             Name = name,
             Endpoint = endpoint,
             Model = model,
-            ApiKey = input.ClearApiKey ? string.Empty : key.Length > 0 ? key : previous?.Endpoint == endpoint ? previous.ApiKey : string.Empty,
+            ApiKey = input.ClearApiKey ? string.Empty : key.Length > 0 ? key
+                : previous is not null && ModelEndpoint.NormalizeBase(previous.Endpoint) == endpoint ? previous.ApiKey : string.Empty,
             ThinkingEnabled = input.ThinkingEnabled,
             ThinkingEffort = input.ThinkingEffort
         };

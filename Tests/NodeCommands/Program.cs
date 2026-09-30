@@ -154,6 +154,7 @@ else
 }
 
 tests.AddRange(TaskProgressTests.Cases());
+tests.AddRange(ModelEndpointTests.Cases());
 foreach (var test in tests)
 {
     await test.Run();

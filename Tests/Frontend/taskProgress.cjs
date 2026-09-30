@@ -45,9 +45,54 @@ const task = (patch = {}) => ({ taskId: 'a'.repeat(32), title: '安装 Java', st
   await background.advance();
   assert.equal(calls, 2, 'terminal task still polled');
   background.tracker.beginTurn();
-  assert.equal(background.tracker.tasks.value.length, 0, 'completed task was not cleared on next message');
+  assert.equal(background.tracker.tasks.value.length, 1, 'new message dismissed completion before five seconds');
+  await background.advance(2999);
+  assert.equal(background.tracker.tasks.value.length, 1, 'completion disappeared before five seconds');
+  await background.advance(1);
+  assert.equal(background.tracker.tasks.value.length, 0, 'completion did not disappear after five seconds');
+  background.tracker.track(task({ value: 100, state: 'success', completed: true, success: true }));
+  background.tracker.track(task());
+  assert.equal(background.tracker.tasks.value.length, 0, 'late receipt resurrected a dismissed task');
   background.tracker.reset();
-  console.log('PASS background progress persists across messages and stops after completion');
+  console.log('PASS completion remains for five seconds across messages and late events cannot resurrect it');
+
+  const stacked = harness(async (id) => task({ taskId: id, value: 40 }));
+  stacked.tracker.track(task({ state: 'success', value: 100, completed: true, success: true }));
+  stacked.tracker.track(task({ taskId: 'b' }));
+  await stacked.advance();
+  assert.equal(stacked.tracker.tasks.value.length, 2, 'active task replaced another card');
+  stacked.tracker.track(task({ taskId: 'b', state: 'failed', completed: true }));
+  stacked.tracker.track(task({ taskId: 'c', state: 'canceled', completed: true }));
+  assert.equal(stacked.tracker.tasks.value.length, 3);
+  await stacked.advance(2999);
+  assert.equal(stacked.tracker.tasks.value.length, 3);
+  await stacked.advance(1);
+  assert.deepEqual(stacked.tracker.tasks.value.map((item) => item.taskId), ['b', 'c'], 'one completion dismissed other cards');
+  await stacked.advance(1999);
+  assert.equal(stacked.tracker.tasks.value.length, 2);
+  await stacked.advance(1);
+  assert.equal(stacked.tracker.tasks.value.length, 0, 'failure or cancellation did not dismiss independently');
+  stacked.tracker.track(task());
+  assert.equal(stacked.tracker.tasks.value.length, 0);
+  stacked.tracker.reset();
+  stacked.tracker.track(task({ state: 'success', completed: true, success: true }));
+  await stacked.advance(1000);
+  stacked.tracker.reset();
+  stacked.tracker.track(task());
+  await stacked.advance(4000);
+  assert.equal(stacked.tracker.tasks.value.length, 1, 'old dismissal timer affected a new conversation');
+  stacked.tracker.reset();
+  console.log('PASS multiple task cards stack, dismiss independently and clear timers on reset');
+
+  const history = harness(async (id) => task({ taskId: id }));
+  history.tracker.restore([
+    { role: 'tool', content: '', taskProgress: task() },
+    { role: 'tool', content: '', taskProgress: task({ state: 'success', completed: true, success: true }) },
+    { role: 'tool', content: '', taskProgress: task({ taskId: 'b' }) },
+  ]);
+  assert.deepEqual(history.tracker.tasks.value.map((item) => item.taskId), ['b'], 'history redisplayed completed task cards');
+  history.tracker.reset();
+  console.log('PASS history resumes unfinished tasks without redisplaying completed cards');
 
   let resolve;
   const stale = harness(() => new Promise((done) => { resolve = done; }));
@@ -94,6 +139,7 @@ const task = (patch = {}) => ({ taskId: 'a'.repeat(32), title: '安装 Java', st
   assert.match(html, /2 MB\/s/);
   assert.match(html, /安装失败/);
   assert.match(html, /状态暂不可用/);
+  assert.equal((html.match(/role="progressbar"/g) || []).length, 3, 'multiple task cards were not rendered together');
   assert.ok(html.includes('&lt;script&gt;unsafe&lt;/script&gt;') && !html.includes('<script>unsafe</script>'));
   console.log('PASS task progress renders percentages, speed, failures and escaped task text');
 })().catch((error) => { console.error(error); process.exitCode = 1; });

@@ -61,7 +61,7 @@ defineExpose({ open });
         aria-label="询问 Elements AI"
         @click="open"
       >
-        <ChatIcon size="20px" />
+        <ChatIcon size="18px" />
       </t-button>
     </t-tooltip>
   </Teleport>
@@ -153,5 +153,6 @@ defineExpose({ open });
 
 :global(.elements-ai-header-button) {
   flex: 0 0 auto;
+  margin-left: 14px;
 }
 </style>

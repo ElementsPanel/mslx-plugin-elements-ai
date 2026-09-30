@@ -28,8 +28,8 @@ function percent(task: TaskProgressView) {
 </template>
 
 <style scoped>
-.task-progress-list { flex-shrink: 0; max-height: 180px; overflow-y: auto; padding: 0.7rem 1.25rem; border-top: 1px solid var(--td-component-border); display: grid; gap: 0.8rem; }
-.task-progress { min-width: 0; color: var(--td-brand-color); }
+.task-progress-list { flex-shrink: 0; max-height: 220px; overflow-y: auto; padding: 0.7rem 1.25rem; border-top: 1px solid var(--td-component-border); display: flex; flex-direction: column; gap: 0.5rem; }
+.task-progress { flex-shrink: 0; min-width: 0; padding: 0.65rem 0.75rem; border: 1px solid var(--td-component-border); border-radius: 8px; background: var(--td-bg-color-container); color: var(--td-brand-color); }
 .task-heading, .task-detail { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; font-size: 12px; }
 .task-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--td-text-color-primary); }
 .task-state, .task-speed { flex-shrink: 0; font-variant-numeric: tabular-nums; }

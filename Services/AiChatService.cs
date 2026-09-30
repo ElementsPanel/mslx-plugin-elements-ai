@@ -9,8 +9,6 @@ namespace MSLX.Plugin.ElementsAI.Services;
 public sealed class AiChatService
 {
     private const int MaxMessageLength = 4000;
-    private const int MaxToolCalls = 20;
-    private const int MaxRounds = 12;
 
     private const string SystemPrompt = """
         You are the Elements AI assistant running inside MSLX, a Minecraft server panel. Reply in the user's language.
@@ -145,9 +143,8 @@ public sealed class AiChatService
 
             var tools = new MslxToolService(_lifecycle, _console, _resources, user, hostRequest, _nodeCommands, _tasks);
             var definitions = MslxToolService.Definitions(user.IsAdmin);
-            var totalCalls = 0;
             var seenCallIds = new HashSet<string>(StringComparer.Ordinal);
-            for (var round = 0; round < MaxRounds; round++)
+            while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var assistant = new ChatMessage { Role = "assistant", Pending = true, Content = string.Empty };
@@ -203,10 +200,9 @@ public sealed class AiChatService
                 await emitter.EmitAsync(new { type = "message", index = assistantIndex, message = assistant }, cancellationToken);
 
                 if (completion.ToolCalls.Count == 0) break;
-                if (round == MaxRounds - 1) throw new ToolException("本轮工具调用轮次已达到上限。");
                 foreach (var call in completion.ToolCalls)
                 {
-                    if (++totalCalls > MaxToolCalls) throw new ToolException("本轮工具调用次数已达到上限。");
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (string.IsNullOrWhiteSpace(call.Id) || !seenCallIds.Add(call.Id))
                         throw new ToolException("模型返回了重复或无效的工具调用。");
                     using var arguments = ParseArguments(call.Function.Arguments);
