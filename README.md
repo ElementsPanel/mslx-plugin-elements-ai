@@ -52,6 +52,7 @@ Release 构建会将依赖合并为插件 DLL，并嵌入 `Frontend/dist` 产物
 ```bash
 dotnet run --project Tests/NodeCommands/NodeCommands.csproj
 node Tests/Frontend/taskProgress.cjs
+node Tests/Frontend/modelDraft.cjs
 ```
 
 ## 使用

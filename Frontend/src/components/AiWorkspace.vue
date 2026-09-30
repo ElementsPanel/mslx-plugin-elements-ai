@@ -84,6 +84,7 @@ const modelValid = computed(() =>
 
 function emptyModel(): ModelInput {
   return {
+    id: undefined,
     name: '', endpoint: '', model: '', apiKey: '', clearApiKey: false,
     thinkingEnabled: null, thinkingEffort: 'medium',
   };
