@@ -2,11 +2,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import {
-  CheckCircleIcon,
-  ErrorCircleIcon,
-  LoadingIcon,
-} from 'tdesign-icons-vue-next';
-import {
   deleteConversations,
   deleteModel,
   deletePreset,
@@ -32,6 +27,8 @@ import type {
 } from '../types/ai';
 import FileDiffView from './FileDiff.vue';
 import MarkdownMessage from './MarkdownMessage.vue';
+import ToolReceipt from './ToolReceipt.vue';
+import ThinkingLine from './ThinkingLine.vue';
 
 const props = withDefaults(defineProps<{ currentInstanceId?: number; compact?: boolean }>(), {
   compact: false,
@@ -443,22 +440,13 @@ onBeforeUnmount(() => controller.value?.abort());
           <div v-if="message.role === 'user'" class="message-bubble user-bubble">{{ message.content }}</div>
 
           <div v-else-if="message.role === 'assistant'" class="assistant-message">
-            <details v-if="message.reasoning" class="reasoning" :open="message.pending">
-              <summary>{{ message.pending ? '正在思考…' : '思考过程' }}</summary>
-              <pre>{{ message.reasoning }}</pre>
-            </details>
+            <ThinkingLine v-if="message.reasoning" :content="message.reasoning" :pending="message.pending" />
             <MarkdownMessage v-if="message.content" :content="message.content" />
-            <div v-else-if="message.pending" class="typing"><span></span><span></span><span></span></div>
+            <div v-else-if="message.pending && !message.reasoning" class="typing"><span></span><span></span><span></span></div>
           </div>
 
           <div v-else-if="message.role === 'tool'" class="tool-row" :class="{ failed: message.ok === false }">
-            <div class="tool-title">
-              <LoadingIcon v-if="message.pending" class="tool-status-icon pending" size="16px" />
-              <CheckCircleIcon v-else-if="message.ok" class="tool-status-icon success" size="16px" />
-              <ErrorCircleIcon v-else class="tool-status-icon failed" size="16px" />
-              <strong>{{ toolLabel(message.tool) }}</strong>
-              <small>{{ message.pending ? '处理中' : message.ok ? '已完成' : message.commandResult ? '执行失败' : '未执行' }}</small>
-            </div>
+            <ToolReceipt :message="message" :label="toolLabel(message.tool)" />
             <div v-if="message.approval" class="approval-box">
               <p>该操作需要你的确认：</p>
               <pre>{{ message.approval.arguments }}</pre>
@@ -478,12 +466,6 @@ onBeforeUnmount(() => controller.value?.abort());
               </div>
             </div>
             <FileDiffView v-if="message.diff" :diff="message.diff" />
-            <div v-if="message.commandResult" class="command-result">
-              <p>节点 {{ message.commandResult.nodeId }} · {{ message.commandResult.timedOut ? '执行超时' : `退出码 ${message.commandResult.exitCode}` }}</p>
-              <pre v-if="message.commandResult.stdout">{{ message.commandResult.stdout }}</pre>
-              <pre v-if="message.commandResult.stderr">{{ message.commandResult.stderr }}</pre>
-              <small v-if="message.commandResult.truncated">输出过长，已截断。</small>
-            </div>
           </div>
 
           <div v-else class="error-message">{{ message.content }}</div>
@@ -618,22 +600,14 @@ onBeforeUnmount(() => controller.value?.abort());
 .message-bubble { max-width: min(780px, 86%); border-radius: 14px; padding: 0.75rem 0.9rem; }
 .user-bubble { white-space: pre-wrap; color: var(--td-text-color-anti); background: var(--td-brand-color); border-bottom-right-radius: 5px; }
 .assistant-message { width: min(780px, 92%); }
-.reasoning { margin-bottom: 0.7rem; color: var(--td-text-color-secondary); font-size: 12px; }
-.reasoning summary { cursor: pointer; font-weight: 600; }
-.reasoning pre { white-space: pre-wrap; max-height: 220px; overflow: auto; margin: 0.45rem 0 0; padding: 0.55rem; background: var(--td-bg-color-secondarycontainer); border-radius: 8px; }
 .typing { display: flex; gap: 4px; padding: 0.35rem; }
 .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--td-brand-color); animation: pulse 1s infinite alternate; }
 .typing span:nth-child(2) { animation-delay: .2s; }.typing span:nth-child(3) { animation-delay: .4s; }
 @keyframes pulse { to { opacity: .25; transform: translateY(-3px); } }
 .tool-row { width: min(780px, 92%); padding: 0.25rem 0; }
 .tool-row.failed { color: var(--td-error-color); }
-.tool-title { display: flex; align-items: center; gap: 0.45rem; color: var(--td-text-color-secondary); font-size: 13px; }.tool-title strong { color: var(--td-text-color-primary); font-weight: 600; }.tool-title small { margin-left: auto; color: var(--td-text-color-placeholder); }.tool-status-icon { flex: 0 0 auto; }.tool-status-icon.pending { color: var(--td-brand-color); animation: spin 1s linear infinite; }.tool-status-icon.success { color: var(--td-success-color); }.tool-status-icon.failed { color: var(--td-error-color); }
-@keyframes spin { to { transform: rotate(360deg); } }
 .approval-box, .question-box { margin-top: 0.65rem; padding: 0.7rem 0.8rem; border-left: 2px solid var(--td-component-border); color: var(--td-text-color-secondary); }
 .approval-box p, .question-box p { margin: 0 0 0.55rem; font-weight: 600; }
-.command-result { margin-top: 0.65rem; color: var(--td-text-color-secondary); }
-.command-result p { margin: 0 0 0.5rem; font-size: 12px; }
-.command-result pre { margin: 0.4rem 0; padding: 0.6rem; max-height: 300px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 6px; color: #e5e7eb; background: #151922; }
 .approval-box pre { overflow: auto; max-height: 240px; white-space: pre-wrap; margin: 0 0 0.65rem; padding: 0.6rem; border-radius: 6px; color: #e5e7eb; background: #151922; }
 .option-list { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .custom-answer { display: flex; gap: 0.5rem; margin-top: 0.55rem; }.custom-answer input { flex: 1; }

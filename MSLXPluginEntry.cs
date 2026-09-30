@@ -16,7 +16,7 @@ public sealed class MSLXPluginEntry : IPlugin
     public string Id => PluginId;
     public string Name => "Elements AI";
     public string Description => "在 MSLX 中使用 AI 助手管理节点命令、实例、终端、配置文件和模组资源。";
-    public string Version => "0.1.10";
+    public string Version => "0.1.11";
     public string Icon => "icon.png";
     public string MinSDKVersion => "1.7.0.2";
     public string Developer => "ElementsPanel";
