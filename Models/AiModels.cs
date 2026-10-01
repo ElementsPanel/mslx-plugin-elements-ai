@@ -1,8 +1,24 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MSLX.Plugin.ElementsAI.Models;
 
-public sealed record UserContext(string UserId, bool IsAdmin, string Scope);
+public sealed record UserContext(string UserId, bool IsAdmin, string Scope)
+{
+    public static string AuthorizationScope(string userId, string role, IEnumerable<string> resources)
+    {
+        // Instance existence/status can change during a chat without changing permissions.
+        var value = JsonSerializer.Serialize(new
+        {
+            userId, role = role.ToLowerInvariant(), resources = resources.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray()
+        });
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+    }
+}
+
+public sealed record InteractionStatus(bool Active, string[] ApprovalIds, string[] QuestionIds);
 
 public sealed class ChatPreferences
 {

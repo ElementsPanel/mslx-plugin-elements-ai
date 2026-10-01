@@ -21,6 +21,12 @@ export interface ToolQuestion {
   options: string[];
 }
 
+export interface InteractionStatus {
+  active: boolean;
+  approvalIds: string[];
+  questionIds: string[];
+}
+
 export interface AiTaskProgress {
   taskId: string;
   title: string;

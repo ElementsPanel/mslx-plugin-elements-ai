@@ -6,6 +6,7 @@ import type {
   ChatPreferences,
   ConversationDetail,
   ConversationSummary,
+  InteractionStatus,
   ModelInput,
   ModelOption,
   PermissionMode,
@@ -51,9 +52,36 @@ export const getConversation = (id: string) =>
 export const deleteConversations = (ids: string[]) =>
   request.delete({ url: `${base}/conversations`, data: { ids } }) as Promise<number>;
 export const respondToApproval = (id: string, approved: boolean) =>
-  request.post({ url: `${base}/approvals/${encodeURIComponent(id)}`, data: { approved } }) as Promise<boolean>;
+  respondToInteraction('approvals', id, { approved });
 export const respondToQuestion = (id: string, answer: string) =>
-  request.post({ url: `${base}/questions/${encodeURIComponent(id)}`, data: { answer } }) as Promise<boolean>;
+  respondToInteraction('questions', id, { answer });
+
+export class InteractionUnavailableError extends Error { }
+
+async function respondToInteraction(kind: 'approvals' | 'questions', id: string, data: object): Promise<boolean> {
+  const response = await fetch(`${base}/${kind}/${encodeURIComponent(id)}`, {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'x-user-token': token() },
+    body: JSON.stringify(data),
+  });
+  const body = await response.json().catch(() => ({}));
+  if ([404, 409, 410].includes(response.status) || [404, 409, 410].includes(body.code))
+    throw new InteractionUnavailableError(body.message || '本次确认已结束。');
+  if (!response.ok || body.code !== 200 || body.data !== true) throw new Error(body.message || `HTTP ${response.status}`);
+  return true;
+}
+
+export async function getInteractionStatus(): Promise<InteractionStatus> {
+  const response = await fetch(`${base}/interactions`, {
+    credentials: 'same-origin', cache: 'no-store', headers: { 'x-user-token': token() },
+  });
+  const body = await response.json();
+  if (!response.ok || body.code !== 200) throw new Error(body.message || `HTTP ${response.status}`);
+  const state = body.data;
+  if (typeof state?.active !== 'boolean' || !Array.isArray(state.approvalIds) || !Array.isArray(state.questionIds))
+    throw new Error('无法读取确认状态。');
+  return state;
+}
 
 export async function sendMessage(
   message: string,

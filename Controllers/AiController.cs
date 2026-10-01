@@ -1,7 +1,4 @@
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -133,6 +130,9 @@ public sealed class AiController(AiDataStore store, AiChatService chat, TaskProg
         return Ok(Packet(true));
     }
 
+    [HttpGet("interactions")]
+    public ActionResult<ApiResponse<InteractionStatus>> Interactions() => Ok(Packet(chat.GetInteractionStatus(CurrentUser())));
+
     private UserContext CurrentUser()
     {
         var claimId = User.FindFirstValue("UserId") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -140,19 +140,7 @@ public sealed class AiController(AiDataStore store, AiChatService chat, TaskProg
         var current = SDK.MSLX.Config.Users.GetUserById(claimId)
                       ?? throw new UnauthorizedAccessException("当前账号不存在。");
         var admin = current.Role.Equals("admin", StringComparison.OrdinalIgnoreCase);
-        var accessible = SDK.MSLX.Config.Servers.GetServerList()
-            .Where(server => admin || SDK.MSLX.Config.Users.HasResourcePermission(current.Id, "instance", server.ID))
-            .Select(server => server.ID)
-            .Order()
-            .ToArray();
-        var scopeValue = JsonSerializer.Serialize(new
-        {
-            current.Id,
-            role = current.Role.ToLowerInvariant(),
-            resources = current.Resources.Order(StringComparer.Ordinal).ToArray(),
-            instances = accessible
-        });
-        var scope = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(scopeValue))).ToLowerInvariant();
+        var scope = UserContext.AuthorizationScope(current.Id, current.Role, current.Resources);
         return new UserContext(current.Id, admin, scope);
     }
 

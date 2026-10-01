@@ -16,12 +16,15 @@ const workspace = ref<{
   newChat: () => void;
   openHistory: () => Promise<void>;
   openSettings: () => Promise<void>;
+  syncInteractions: () => Promise<void>;
 } | null>(null);
 let headerObserver: MutationObserver | undefined;
 const currentInstanceId = computed(() => props.serverId ?? routeInstanceId.value);
 
-function open() {
+async function open() {
   visible.value = true;
+  await nextTick();
+  await workspace.value?.syncInteractions();
 }
 
 function syncHeaderTarget() {
@@ -73,6 +76,7 @@ defineExpose({ open });
     attach="body"
     drawer-class-name="elements-ai-drawer"
     :footer="false"
+    :destroy-on-close="false"
   >
     <template #header>
       <div class="drawer-header">

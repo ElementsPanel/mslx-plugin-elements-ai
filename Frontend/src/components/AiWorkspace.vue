@@ -7,6 +7,8 @@ import {
   deleteModel,
   deletePreset,
   getConversation,
+  getInteractionStatus,
+  InteractionUnavailableError,
   getStatus,
   listConversations,
   listPresets,
@@ -46,6 +48,8 @@ const permissionMode = ref<PermissionMode>('default');
 let selectionUserId = '';
 let selectionToken = '';
 let statusSequence = 0;
+let interactionSequence = 0;
+let eventRevision = 0;
 const messages = ref<ChatMessage[]>([]);
 const conversationId = ref<string>();
 const draft = ref('');
@@ -95,6 +99,7 @@ function emptyModel(): ModelInput {
 }
 
 function reset(clearDraft = false) {
+  interactionSequence++;
   controller.value?.abort();
   controller.value = undefined;
   messages.value = [];
@@ -162,6 +167,7 @@ async function scrollToEnd() {
 }
 
 function applyEvent(event: ChatEvent) {
+  eventRevision++;
   if (event.type === 'start') {
     conversationId.value = event.conversationId;
     messages.value = event.messages;
@@ -189,6 +195,7 @@ function applyEvent(event: ChatEvent) {
 
 async function send() {
   if (!canSend.value) return;
+  interactionSequence++;
   const text = draft.value.trim();
   draft.value = '';
   loading.value = true;
@@ -225,10 +232,10 @@ async function send() {
 
 function clearPendingMessages() {
   for (const message of messages.value) {
-    if (!message.pending) continue;
-    message.pending = false;
     message.approval = undefined;
     message.question = undefined;
+    if (!message.pending) continue;
+    message.pending = false;
     if (message.role === 'tool') {
       message.ok = false;
       if (!message.content) message.content = '请求已停止。';
@@ -239,6 +246,7 @@ function clearPendingMessages() {
 }
 
 function stop() {
+  interactionSequence++;
   controller.value?.abort();
   controller.value = undefined;
   loading.value = false;
@@ -256,13 +264,20 @@ function keydown(event: KeyboardEvent) {
 
 async function decideApproval(message: ChatMessage, approved: boolean) {
   if (!message.approval || approvalSubmitting.value) return;
-  approvalSubmitting.value = message.approval.id;
+  const id = message.approval.id;
+  const requestToken = authToken.value;
+  approvalSubmitting.value = id;
   try {
-    await respondToApproval(message.approval.id, approved);
+    await respondToApproval(id, approved);
+    if (requestToken === authToken.value && message.approval?.id === id) message.approval = undefined;
   } catch (err) {
-    MessagePlugin.error(messageOf(err));
+    if (requestToken !== authToken.value || !messages.value.includes(message) || message.approval?.id !== id) return;
+    if (err instanceof InteractionUnavailableError) {
+      message.approval = undefined;
+      await syncInteractions();
+    } else MessagePlugin.error(messageOf(err));
   } finally {
-    approvalSubmitting.value = '';
+    if (approvalSubmitting.value === id) approvalSubmitting.value = '';
   }
 }
 
@@ -270,14 +285,51 @@ async function answerQuestion(message: ChatMessage, selected?: string) {
   if (!message.question || questionSubmitting.value) return;
   const answer = (selected ?? questionAnswers[message.question.id] ?? '').trim();
   if (!answer) return;
-  questionSubmitting.value = message.question.id;
+  const id = message.question.id;
+  const requestToken = authToken.value;
+  questionSubmitting.value = id;
   try {
-    await respondToQuestion(message.question.id, answer);
+    await respondToQuestion(id, answer);
+    if (requestToken === authToken.value && message.question?.id === id) message.question = undefined;
   } catch (err) {
-    MessagePlugin.error(messageOf(err));
+    if (requestToken !== authToken.value || !messages.value.includes(message) || message.question?.id !== id) return;
+    if (err instanceof InteractionUnavailableError) {
+      message.question = undefined;
+      await syncInteractions();
+    } else MessagePlugin.error(messageOf(err));
   } finally {
-    questionSubmitting.value = '';
+    if (questionSubmitting.value === id) questionSubmitting.value = '';
   }
+}
+
+async function syncInteractions() {
+  if (!loading.value && !messages.value.some((message) => message.approval || message.question)) return;
+  const sequence = ++interactionSequence;
+  const revision = eventRevision;
+  const active = controller.value;
+  const requestToken = authToken.value;
+  const id = conversationId.value;
+  const current = () => sequence === interactionSequence && revision === eventRevision
+    && active === controller.value && requestToken === authToken.value && id === conversationId.value;
+  try {
+    const state = await getInteractionStatus();
+    if (!current()) return;
+    for (const message of messages.value) {
+      if (message.approval && !state.approvalIds.includes(message.approval.id)) message.approval = undefined;
+      if (message.question && !state.questionIds.includes(message.question.id)) message.question = undefined;
+    }
+    if (!state.active) {
+      stop();
+      const recoverySequence = interactionSequence;
+      if (!id) return;
+      const saved = await getConversation(id);
+      if (recoverySequence !== interactionSequence || requestToken !== authToken.value || id !== conversationId.value) return;
+      messages.value = saved.messages;
+      clearPendingMessages();
+      taskProgress.restore(saved.messages);
+      await scrollToEnd();
+    }
+  } catch { /* A failed status request must not invalidate a still-live approval. */ }
 }
 
 async function openHistory() {
@@ -356,7 +408,7 @@ async function openSettings() {
   }
 }
 
-defineExpose({ newChat, openHistory, openSettings });
+defineExpose({ newChat, openHistory, openSettings, syncInteractions });
 
 async function persistPreferences() {
   if (!status.value) return;
@@ -469,7 +521,21 @@ watch(authToken, (next, previous) => {
 });
 
 onMounted(refreshStatus);
-onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgress.reset(); });
+function syncWhenVisible() {
+  if (document.visibilityState === 'visible') void syncInteractions();
+}
+onMounted(() => {
+  window.addEventListener('focus', syncWhenVisible);
+  document.addEventListener('visibilitychange', syncWhenVisible);
+});
+onBeforeUnmount(() => {
+  statusSequence++;
+  interactionSequence++;
+  controller.value?.abort();
+  taskProgress.reset();
+  window.removeEventListener('focus', syncWhenVisible);
+  document.removeEventListener('visibilitychange', syncWhenVisible);
+});
 </script>
 
 <template>

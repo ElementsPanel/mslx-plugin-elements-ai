@@ -41,7 +41,7 @@ public sealed class AiChatService
     private readonly NodeCommandService _nodeCommands;
     private readonly TaskProgressService _tasks;
     private readonly MslFrpService _mslFrp;
-    private readonly ConcurrentDictionary<string, byte> _activeUsers = new();
+    private readonly ConcurrentDictionary<string, string> _activeUsers = new();
     private readonly ConcurrentDictionary<string, PendingApproval> _approvals = new();
     private readonly ConcurrentDictionary<string, PendingQuestion> _questions = new();
 
@@ -98,8 +98,7 @@ public sealed class AiChatService
             return false;
         if (!_approvals.TryRemove(id, out var removed) || !ReferenceEquals(pending, removed))
             return false;
-        pending.Completion.TrySetResult(approved);
-        return true;
+        return pending.Completion.TrySetResult(approved);
     }
 
     public bool RespondToQuestion(UserContext user, string id, string answer)
@@ -110,9 +109,15 @@ public sealed class AiChatService
             return false;
         if (!_questions.TryRemove(id, out var removed) || !ReferenceEquals(pending, removed))
             return false;
-        pending.Completion.TrySetResult(answer);
-        return true;
+        return pending.Completion.TrySetResult(answer);
     }
+
+    public InteractionStatus GetInteractionStatus(UserContext user) => new(
+        _activeUsers.TryGetValue(user.UserId, out var scope) && scope == user.Scope,
+        _approvals.Where(item => item.Value.UserId == user.UserId && item.Value.Scope == user.Scope && !item.Value.Completion.Task.IsCompleted)
+            .Select(item => item.Key).ToArray(),
+        _questions.Where(item => item.Value.UserId == user.UserId && item.Value.Scope == user.Scope && !item.Value.Completion.Task.IsCompleted)
+            .Select(item => item.Key).ToArray());
 
     public async Task StreamChatAsync(
         ChatRequest request,
@@ -122,7 +127,7 @@ public sealed class AiChatService
     {
         var hostRequest = MslxHostRequestContext.Capture(response.HttpContext);
         ValidateRequest(request);
-        if (!_activeUsers.TryAdd(user.UserId, 0))
+        if (!_activeUsers.TryAdd(user.UserId, user.Scope))
             throw new AiValidationException("当前账号已有一个 AI 请求正在执行。");
 
         var emitter = new SseEmitter(response);
@@ -359,7 +364,7 @@ public sealed class AiChatService
         using var registration = cancellationToken.Register(() => pending.Completion.TrySetCanceled(cancellationToken));
         try
         {
-            var answer = await pending.Completion.Task.WaitAsync(TimeSpan.FromMinutes(10), cancellationToken);
+            var answer = await InteractionWait.WaitAsync(pending.Completion.Task, () => emitter.KeepAliveAsync(cancellationToken), cancellationToken);
             return new { answer };
         }
         finally
@@ -385,7 +390,7 @@ public sealed class AiChatService
         using var registration = cancellationToken.Register(() => pending.Completion.TrySetCanceled(cancellationToken));
         try
         {
-            return await pending.Completion.Task.WaitAsync(TimeSpan.FromMinutes(10), cancellationToken);
+            return await InteractionWait.WaitAsync(pending.Completion.Task, () => emitter.KeepAliveAsync(cancellationToken), cancellationToken);
         }
         finally
         {
