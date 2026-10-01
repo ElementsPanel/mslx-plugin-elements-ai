@@ -158,6 +158,7 @@ tests.AddRange(TaskProgressTests.Cases());
 tests.AddRange(ModelEndpointTests.Cases());
 tests.AddRange(TerminalWaitTests.Cases());
 tests.AddRange(MslFrpTests.Cases());
+tests.AddRange(ToolCallHistoryTests.Cases());
 foreach (var test in tests)
 {
     await test.Run();

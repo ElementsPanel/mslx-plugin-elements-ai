@@ -153,6 +153,6 @@ defineExpose({ open });
 
 :global(.elements-ai-header-button) {
   flex: 0 0 auto;
-  margin-left: 10px;
+  margin-left: 8px;
 }
 </style>

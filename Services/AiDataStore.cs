@@ -202,6 +202,7 @@ public sealed class AiDataStore
         ConversationRecord conversation,
         CancellationToken cancellationToken)
     {
+        conversation.Context = ProviderHistory.Repair(conversation.Context);
         return WithUserLockAsync(userId, async data =>
         {
             data.Conversations.RemoveAll(item => item.Id == conversation.Id);
