@@ -68,7 +68,7 @@ static class TaskProgressTests
             var service = new TaskProgressService(new FakeTaskManager());
             var (id, _) = service.StartDownload(User, 1, "mod.jar");
             service.Fail(id, "network error");
-            var tools = new MslxToolService(null!, null!, null!, User, new(null, null, null), null!, service);
+            var tools = new MslxToolService(null!, null!, null!, User, new(null, null, null), null!, service, null!);
             using var args = JsonDocument.Parse(JsonSerializer.Serialize(new { taskId = id, timeoutSeconds = 1 }));
             var result = await tools.ExecuteAsync("wait_for_task", args.RootElement, null, default);
             Check(!result.Ok && result.TaskProgress?.State == "failed" && result.Value is TaskWaitResult { Completed: true, Success: false }, "failed wait receipt lost");

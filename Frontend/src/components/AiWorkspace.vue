@@ -430,6 +430,8 @@ function confirmDeleteModel(source: 'personal' | 'preset', model: ModelOption) {
 
 function toolLabel(name?: string) {
   const labels: Record<string, string> = {
+    list_mslfrp_nodes: 'MSLFRP：查询节点', list_mslfrp_tunnels: 'MSLFRP：查询隧道',
+    create_mslfrp_tunnel: '创建 MSLFRP 隧道', import_mslfrp_tunnel: '导入 MSLFRP 隧道',
     list_nodes: '查询节点', execute_node_command: '执行节点命令',
     ask_user: '询问用户', list_instances: '查询实例', get_instance: '读取实例', read_terminal: '读取终端',
     control_instance: '控制实例', send_command: '发送命令', update_instance: '更新实例', create_instance: '创建实例',

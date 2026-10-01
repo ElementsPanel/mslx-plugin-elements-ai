@@ -64,6 +64,14 @@ export async function sendMessage(
   signal: AbortSignal,
   onEvent: (event: ChatEvent) => void,
 ) {
+  // The MSL credential is request-scoped and never part of the model/chat payload.
+  const mslHeaders: Record<string, string> = {};
+  let currentNodeId = 'local';
+  try {
+    currentNodeId = localStorage.getItem('ACTIVE_NODE_ID') || 'local';
+    const mslToken = userStore()?.isAdmin ? localStorage.getItem('msl-user-token') : null;
+    if (mslToken) mslHeaders['x-mslfrp-token'] = mslToken;
+  } catch { /* Browser storage may be unavailable; other chat tools still work. */ }
   const response = await fetch(`${base}/chat`, {
     method: 'POST',
     credentials: 'same-origin',
@@ -72,10 +80,11 @@ export async function sendMessage(
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
       'x-user-token': token(),
+      ...mslHeaders,
     },
     body: JSON.stringify({
       message, conversationId, modelId, permissionMode, currentInstanceId,
-      currentNodeId: localStorage.getItem('ACTIVE_NODE_ID') || 'local',
+      currentNodeId,
     }),
   });
   if (!response.ok) {

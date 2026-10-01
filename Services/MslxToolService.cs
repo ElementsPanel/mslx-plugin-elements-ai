@@ -16,7 +16,7 @@ using MSLX.SDK.Models.Files;
 
 namespace MSLX.Plugin.ElementsAI.Services;
 
-public sealed record MslxHostRequestContext(string? BaseUrl, string? Token, string? NodeId)
+public sealed record MslxHostRequestContext(string? BaseUrl, string? Token, string? NodeId, string? MslFrpToken = null)
 {
     public static MslxHostRequestContext Capture(HttpContext context)
     {
@@ -30,7 +30,7 @@ public sealed record MslxHostRequestContext(string? BaseUrl, string? Token, stri
             var localScheme = context.Features.Get<ITlsHandshakeFeature>() is null ? "http" : "https";
             baseUrl = new UriBuilder(localScheme, localAddress.ToString(), localPort).Uri.GetLeftPart(UriPartial.Authority);
         }
-        return new MslxHostRequestContext(baseUrl, token, nodeId);
+        return new MslxHostRequestContext(baseUrl, token, nodeId, context.Request.Headers["x-mslfrp-token"].FirstOrDefault());
     }
 }
 
@@ -41,11 +41,12 @@ public sealed class MslxToolService(
     UserContext user,
     MslxHostRequestContext hostRequest,
     NodeCommandService nodeCommands,
-    TaskProgressService tasks)
+    TaskProgressService tasks,
+    MslFrpService mslFrp)
 {
     private const int MaxTextBytes = 64 * 1024;
     private const string MslApiBase = "https://api.mslmc.cn";
-    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.23";
+    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.24";
     private readonly Dictionary<string, string> _fileReads = new(StringComparer.Ordinal);
     private TerminalWaitService? _terminal;
     private TerminalWaitService Terminal => _terminal ??= new(console, RequireTerminalAccess);
@@ -53,7 +54,7 @@ public sealed class MslxToolService(
     public static readonly HashSet<string> SensitiveTools =
     [
         "send_command", "execute_node_command", "update_instance", "create_instance", "delete_instance",
-        "edit_file", "create_file", "delete_file", "download_resource"
+        "edit_file", "create_file", "delete_file", "download_resource", "create_mslfrp_tunnel", "import_mslfrp_tunnel"
     ];
 
     public static JsonArray Definitions(bool admin)
@@ -159,6 +160,20 @@ public sealed class MslxToolService(
         tools.Add(Define("list_msl_java_versions", "MSL镜像源：List Java versions available for online installation by MSLX on this host. This is read-only.", new JsonObject()));
         if (admin)
         {
+            tools.Add(Define("list_mslfrp_nodes", "List MSLFRP nodes, supported tunnel/transport protocols, open port ranges, and safe account quota information. Uses the MSL login already saved in this browser by the panel's Create Tunnel > MSLFrp page. MSLFRP node IDs are different from MSLX node IDs. Credentials are never returned.", new JsonObject()));
+            tools.Add(Define("list_mslfrp_tunnels", "List tunnels belonging to the browser's logged-in MSL account, with exact cloud tunnel IDs and safe connection parameters. Use to check an uncertain creation result or select an existing tunnel for import. Does not return credentials or raw configurations.", new JsonObject()));
+            tools.Add(Define("create_mslfrp_tunnel", "Create one explicitly requested MSLFRP cloud tunnel. First call list_mslfrp_nodes and choose an exact online node ID, supported protocols and remote port within its open range. Required: name, nodeId, localPort, remotePort. Defaults: type=tcp, protocol=tcp, localIp=127.0.0.1, importToPanel=true. HTTP/HTTPS require bindDomain. When importToPanel=true, also imports the configuration into this local MSLX host, without starting it; this does not target a remote MSLX node. localIp is relative to the FRP client host/container. If cloud creation succeeds but import fails, use the returned tunnelId with import_mslfrp_tunnel; never create a duplicate. Do not request login credentials in chat.", new JsonObject
+            {
+                ["nodeId"] = IntegerSchema(1, int.MaxValue), ["name"] = StringSchema(100),
+                ["type"] = EnumSchema("tcp", "udp", "http", "https"),
+                ["localIp"] = StringSchema(253), ["localPort"] = IntegerSchema(1, 65535),
+                ["remotePort"] = IntegerSchema(1, 65535), ["protocol"] = EnumSchema("tcp", "kcp", "wss"),
+                ["bindDomain"] = StringSchema(253), ["importToPanel"] = BooleanSchema()
+            }, "nodeId", "name", "localPort", "remotePort"));
+            tools.Add(Define("import_mslfrp_tunnel", "Import one existing MSLFRP cloud tunnel belonging to the browser's logged-in MSL account into this local MSLX host, without starting it. Use an exact tunnelId from list_mslfrp_tunnels or create_mslfrp_tunnel. Use this to finish a partial creation; repeated imports with the same generated panel name are skipped. Does not expose the raw configuration or credentials.", new JsonObject
+            {
+                ["tunnelId"] = IntegerSchema(1, int.MaxValue)
+            }, "tunnelId"));
             tools.Add(Define("list_nodes", "List the local MSLX node and registered remote nodes. Use exact node IDs from this result for node commands. Credentials and connection secrets are not returned.", new JsonObject()));
             tools.Add(Define("execute_node_command", "Execute an explicitly requested, non-interactive operating-system shell command on one exact node from list_nodes. Use nodeId=local for this MSLX host. Unix uses /bin/sh; Windows uses cmd.exe. This is not a Minecraft console command. Runs with the MSLX service account's OS permissions, inside its container if containerized. Remote nodes must have this plugin installed. Default mode requires approval. Returns exit code, stdout and stderr (up to 16000 characters each). Do not launch background processes or retry when execution status is unknown.", new JsonObject
             {
@@ -189,6 +204,13 @@ public sealed class MslxToolService(
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (name is "list_mslfrp_nodes" or "list_mslfrp_tunnels" or "create_mslfrp_tunnel" or "import_mslfrp_tunnel")
+        {
+            if (!user.IsAdmin) throw new ToolException("仅管理员可以执行 MSLFRP 工具。");
+            var current = SDK.MSLX.Config.Users.GetUserById(user.UserId);
+            if (current is null || !current.Role.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                throw new ToolException("仅管理员可以执行 MSLFRP 工具。");
+        }
         if (name is "list_nodes" or "execute_node_command")
         {
             if (!user.IsAdmin) throw new ToolException("仅管理员可以执行节点工具。");
@@ -197,6 +219,10 @@ public sealed class MslxToolService(
         return name switch
         {
             "list_instances" => Result(ListInstances()),
+            "list_mslfrp_nodes" => Result(await mslFrp.ListNodesAsync(hostRequest, cancellationToken)),
+            "list_mslfrp_tunnels" => Result(await mslFrp.ListTunnelsAsync(hostRequest, cancellationToken)),
+            "create_mslfrp_tunnel" => await CreateMslFrpTunnelAsync(args, cancellationToken),
+            "import_mslfrp_tunnel" => await mslFrp.ImportAsync(RequiredInt(args, "tunnelId", 1, int.MaxValue), hostRequest, cancellationToken),
             "get_instance" => Result(GetInstance(InstanceId(args))),
             "read_terminal" => Result(ReadTerminal(args)),
             "wait_for_terminal_update" => Result(await Terminal.WaitAsync(InstanceId(args),
@@ -225,6 +251,17 @@ public sealed class MslxToolService(
             "delete_instance" when user.IsAdmin => Result(DeleteInstance(args)),
             _ => throw new ToolException("不支持的工具或当前账号没有权限。")
         };
+    }
+
+    private Task<ToolExecutionResult> CreateMslFrpTunnelAsync(JsonElement args, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var input = args.Deserialize<MslFrpCreateRequest>(new JsonSerializerOptions(JsonSerializerDefaults.Web))
+                        ?? throw new JsonException();
+            return mslFrp.CreateAsync(input, hostRequest, cancellationToken);
+        }
+        catch (JsonException) { throw new ToolException("MSLFRP 创建参数格式无效，请检查端口、节点 ID 与导入选项。"); }
     }
 
     private object ListInstances()

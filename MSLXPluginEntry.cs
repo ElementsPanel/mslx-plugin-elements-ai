@@ -16,7 +16,7 @@ public sealed class MSLXPluginEntry : IPlugin
     public string Id => PluginId;
     public string Name => "Elements AI";
     public string Description => "让 Agent 接管面板。";
-    public string Version => "0.1.23";
+    public string Version => "0.1.24";
     public string Icon => "icon.png";
     public string MinSDKVersion => "1.7.0.2";
     public string Developer => "JessDaodao";
@@ -50,6 +50,10 @@ public sealed class MSLXPluginEntry : IPlugin
         // MSLX forwards host singleton registrations as factories, which is
         // incompatible with AddHttpClient(name)'s instance-backed registries.
         services.AddSingleton(_ => new NodeCommandService(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
+        {
+            Timeout = Timeout.InfiniteTimeSpan
+        }));
+        services.AddSingleton(_ => new MslFrpService(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
         {
             Timeout = Timeout.InfiniteTimeSpan
         }));
