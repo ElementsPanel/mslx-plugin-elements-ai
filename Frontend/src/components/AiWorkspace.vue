@@ -575,7 +575,7 @@ onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgres
 
     <main v-else-if="view === 'history'" class="panel-view">
       <div class="panel-heading">
-        <div><h2>对话历史</h2><p>每个账号最多保留 50 个对话。</p></div>
+        <div><h2>对话历史</h2></div>
         <div class="inline-actions">
           <t-button size="small" variant="outline" @click="view = 'chat'">返回聊天</t-button>
           <t-button size="small" theme="danger" variant="outline" :disabled="!selectedHistory.length" @click="confirmDeleteHistory">删除所选</t-button>
@@ -596,7 +596,7 @@ onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgres
 
     <main v-else class="panel-view settings-view">
       <div class="panel-heading">
-        <div><h2>Elements AI 设置</h2><p>API Key 只保存在 MSLX 插件数据目录，读取接口不会返回明文。</p></div>
+        <div><h2>Elements AI 设置</h2></div>
         <t-button size="small" variant="outline" @click="view = 'chat'">返回聊天</t-button>
       </div>
       <div v-if="settingsLoading" class="center-state"><t-loading /> 正在读取设置…</div>
@@ -607,7 +607,7 @@ onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgres
         </section>
 
         <section class="model-section">
-          <div class="section-heading"><div><h3>个人模型</h3><p>普通用户只能连接公网模型接口。</p></div><t-button size="small" @click="editModel('personal')">添加模型</t-button></div>
+          <div class="section-heading"><div><h3>个人模型</h3></div><t-button size="small" @click="editModel('personal')">添加模型</t-button></div>
           <div v-if="!personalModels.length" class="muted-box">暂无个人模型。</div>
           <div v-else class="model-grid">
             <article v-for="model in personalModels" :key="model.id" class="model-card">
@@ -618,7 +618,7 @@ onBeforeUnmount(() => { statusSequence++; controller.value?.abort(); taskProgres
         </section>
 
         <section v-if="status?.admin" class="model-section">
-          <div class="section-heading"><div><h3>管理员预设</h3><p>所有账号可选择预设模型，但不会看到接口地址和 API Key。</p></div><t-button size="small" @click="editModel('preset')">添加预设</t-button></div>
+          <div class="section-heading"><div><h3>管理员预设</h3></div><t-button size="small" @click="editModel('preset')">添加预设</t-button></div>
           <div v-if="!presets.length" class="muted-box">暂无管理员预设。</div>
           <div v-else class="model-grid">
             <article v-for="model in presets" :key="model.id" class="model-card">
