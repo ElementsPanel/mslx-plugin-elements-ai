@@ -16,7 +16,7 @@ public sealed class MSLXPluginEntry : IPlugin
     public string Id => PluginId;
     public string Name => "Elements AI";
     public string Description => "让 Agent 接管面板。";
-    public string Version => "0.1.24";
+    public string Version => "0.1.0";
     public string Icon => "icon.png";
     public string MinSDKVersion => "1.7.0.2";
     public string Developer => "JessDaodao";
