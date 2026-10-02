@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
+import { useMslFrpLogin } from './mslFrpLogin';
 import { SendIcon, StopIcon } from 'tdesign-icons-vue-next';
 import {
   deleteConversations,
@@ -289,7 +290,7 @@ async function answerQuestion(message: ChatMessage, selected?: string) {
   const requestToken = authToken.value;
   questionSubmitting.value = id;
   try {
-    await respondToQuestion(id, answer);
+    await respondToQuestion(id, answer, message.question.kind === 'mslfrp_login');
     if (requestToken === authToken.value && message.question?.id === id) message.question = undefined;
   } catch (err) {
     if (requestToken !== authToken.value || !messages.value.includes(message) || message.question?.id !== id) return;
@@ -301,6 +302,8 @@ async function answerQuestion(message: ChatMessage, selected?: string) {
     if (questionSubmitting.value === id) questionSubmitting.value = '';
   }
 }
+
+useMslFrpLogin(messages, message => answerQuestion(message, '继续'));
 
 async function syncInteractions() {
   if (!loading.value && !messages.value.some((message) => message.approval || message.question)) return;
@@ -482,7 +485,7 @@ function confirmDeleteModel(source: 'personal' | 'preset', model: ModelOption) {
 
 function toolLabel(name?: string) {
   const labels: Record<string, string> = {
-    list_mslfrp_nodes: 'MSLFRP：查询节点', list_mslfrp_tunnels: 'MSLFRP：查询隧道',
+    select_mslfrp_node: '选择 MSLFRP 节点', list_mslfrp_nodes: 'MSLFRP：查询节点', list_mslfrp_tunnels: 'MSLFRP：查询隧道',
     create_mslfrp_tunnel: '创建 MSLFRP 隧道', import_mslfrp_tunnel: '导入 MSLFRP 隧道',
     list_nodes: '查询节点', execute_node_command: '执行节点命令',
     ask_user: '询问用户', list_instances: '查询实例', get_instance: '读取实例', read_terminal: '读取终端',
@@ -593,7 +596,8 @@ onBeforeUnmount(() => {
               <div class="option-list">
                 <t-button v-for="option in message.question.options" :key="option" size="small" variant="outline" :disabled="Boolean(questionSubmitting)" @click="answerQuestion(message, option)">{{ option }}</t-button>
               </div>
-              <div class="custom-answer">
+              <t-button v-if="message.question.kind === 'mslfrp_login'" size="small" :loading="questionSubmitting === message.question.id" @click="answerQuestion(message, '继续')">已登录，继续</t-button>
+              <div v-if="!message.question.kind || message.question.kind === 'question'" class="custom-answer">
                 <input v-model="questionAnswers[message.question.id]" maxlength="500" placeholder="或输入自定义回答" @keydown.enter.prevent="answerQuestion(message)" />
                 <t-button size="small" :loading="questionSubmitting === message.question.id" @click="answerQuestion(message)">提交</t-button>
               </div>
@@ -644,6 +648,7 @@ onBeforeUnmount(() => {
         <div><h2>对话历史</h2></div>
         <div class="inline-actions">
           <t-button size="small" variant="outline" @click="view = 'chat'">返回聊天</t-button>
+          <t-button size="small" variant="outline" :disabled="historyLoading || !histories.length" @click="selectedHistory = selectedHistory.length === histories.length ? [] : histories.map(item => item.id)">{{ histories.length && selectedHistory.length === histories.length ? '取消全选' : '全选' }}</t-button>
           <t-button size="small" theme="danger" variant="outline" :disabled="!selectedHistory.length" @click="confirmDeleteHistory">删除所选</t-button>
         </div>
       </div>

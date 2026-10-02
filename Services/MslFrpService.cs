@@ -40,6 +40,16 @@ public sealed class MslFrpService(HttpClient client) : IDisposable
         };
     }
 
+    public async Task<object> SelectNodeAsync(MslxHostRequestContext host, CancellationToken cancellationToken)
+    {
+        var data = JsonSerializer.SerializeToNode(await ListNodesAsync(host, cancellationToken))!;
+        var nodes = new JsonArray(data["nodes"]!.AsArray().Where(n => Number(n, "status") == 1)
+            .Select(n => n!.DeepClone()).ToArray());
+        if (nodes.Count == 0) throw new ToolException("当前账号没有可用的在线 MSLFRP 节点。");
+        if (host.SelectMslFrpNode is null) throw new ToolException("当前请求不支持节点选择。");
+        return await host.SelectMslFrpNode(nodes, cancellationToken);
+    }
+
     public async Task<object> ListTunnelsAsync(MslxHostRequestContext host, CancellationToken cancellationToken) =>
         (await TunnelsAsync(host, cancellationToken)).Select(SafeTunnel).ToArray();
 
@@ -47,6 +57,8 @@ public sealed class MslFrpService(HttpClient client) : IDisposable
         MslFrpCreateRequest input, MslxHostRequestContext host, CancellationToken cancellationToken)
     {
         Validate(input);
+        if (host.SelectedMslFrpNodeId is int selected && input.NodeId != selected)
+            throw new ToolException($"请使用用户选择的 MSLFRP 节点 #{selected} 创建隧道，或重新请用户选择节点。");
         // Check panel access before creating a cloud resource when import was requested.
         if (input.ImportToPanel) await PanelListAsync(host, cancellationToken);
         var nodes = await NodesAsync(host, cancellationToken);
@@ -146,9 +158,11 @@ public sealed class MslFrpService(HttpClient client) : IDisposable
         object? payload = null, bool panel = false)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (!panel && string.IsNullOrWhiteSpace(host.MslFrpToken) && host.LoginMslFrp is not null)
+            host.MslFrpToken = await host.LoginMslFrp(cancellationToken);
         var credential = panel ? host.Token : host.MslFrpToken;
         if (string.IsNullOrWhiteSpace(credential) || credential.Length > 8192 || credential.Any(char.IsControl))
-            throw new ToolException(panel ? "MSLX 登录状态已失效，请重新登录。" : "请先在面板「创建隧道 → MSLFrp」中登录 MSL 账号，再重新发送消息。");
+            throw new ToolException(panel ? "MSLX 登录状态已失效，请重新登录。" : "请先在面板「创建隧道 → MSLFrp」中登录 MSL 账号，登录后继续。");
         if (panel && (!Uri.TryCreate(host.BaseUrl, UriKind.Absolute, out var hostUri)
                       || hostUri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(hostUri.UserInfo)))
             throw new ToolException("无法确定 MSLX 本地地址，未提交隧道配置。");
@@ -164,6 +178,11 @@ public sealed class MslFrpService(HttpClient client) : IDisposable
         try
         {
             using var response = await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+            if (!panel && response.StatusCode == HttpStatusCode.Unauthorized && host.LoginMslFrp is not null)
+            {
+                host.MslFrpToken = await host.LoginMslFrp(cancellationToken);
+                return await SendAsync(path, host, cancellationToken, payload, panel);
+            }
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                 throw new ToolException($"{source} 拒绝访问，请检查账号登录状态与权限。");
             if (!response.IsSuccessStatusCode)
@@ -179,6 +198,11 @@ public sealed class MslFrpService(HttpClient client) : IDisposable
             }
             var root = JsonNode.Parse(buffer.ToArray()) as JsonObject
                        ?? throw new JsonException();
+            if (!panel && Number(root, "code") == 401 && host.LoginMslFrp is not null)
+            {
+                host.MslFrpToken = await host.LoginMslFrp(cancellationToken);
+                return await SendAsync(path, host, cancellationToken, payload, panel);
+            }
             if (Number(root, "code") != 200)
             {
                 // Local errors may contain a raw FRP configuration. Never forward them.

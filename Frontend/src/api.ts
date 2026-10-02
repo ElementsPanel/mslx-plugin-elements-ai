@@ -53,15 +53,15 @@ export const deleteConversations = (ids: string[]) =>
   request.delete({ url: `${base}/conversations`, data: { ids } }) as Promise<number>;
 export const respondToApproval = (id: string, approved: boolean) =>
   respondToInteraction('approvals', id, { approved });
-export const respondToQuestion = (id: string, answer: string) =>
-  respondToInteraction('questions', id, { answer });
+export const respondToQuestion = (id: string, answer: string, login = false) =>
+  respondToInteraction('questions', id, { answer }, login ? localStorage.getItem('msl-user-token') || '' : '');
 
 export class InteractionUnavailableError extends Error { }
 
-async function respondToInteraction(kind: 'approvals' | 'questions', id: string, data: object): Promise<boolean> {
+async function respondToInteraction(kind: 'approvals' | 'questions', id: string, data: object, mslToken = ''): Promise<boolean> {
   const response = await fetch(`${base}/${kind}/${encodeURIComponent(id)}`, {
     method: 'POST', credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'x-user-token': token() },
+    headers: { 'Content-Type': 'application/json', 'x-user-token': token(), ...(mslToken ? { 'x-mslfrp-token': mslToken } : {}) },
     body: JSON.stringify(data),
   });
   const body = await response.json().catch(() => ({}));

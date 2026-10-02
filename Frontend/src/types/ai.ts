@@ -16,6 +16,7 @@ export interface ToolApproval {
 }
 
 export interface ToolQuestion {
+  kind?: 'question' | 'mslfrp_login' | 'mslfrp_node';
   id: string;
   question: string;
   options: string[];

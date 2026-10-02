@@ -28,6 +28,7 @@ function setup(api, storage = memoryStorage(), user = vue.reactive({ token: 'a' 
   const errors = [];
   new Function('require', 'exports', 'window', code)((name) => {
     if (name === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {} };
+    if (name === './mslFrpLogin') return { useMslFrpLogin() {} };
     if (name === '../api') return Object.assign(api, { InteractionUnavailableError });
     if (name === 'tdesign-vue-next') return { MessagePlugin: { error: (message) => errors.push(message) } };
     if (name === 'tdesign-icons-vue-next') return {};

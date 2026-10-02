@@ -2,12 +2,15 @@ import { createApp } from 'vue';
 import TDesign from 'tdesign-vue-next';
 import InstanceAiDialog from './views/InstanceAiDialog.vue';
 
+declare const __ELEMENTS_AI_BUILD_ID__: string;
 const pluginVersion = '0.1.0';
+const buildId = __ELEMENTS_AI_BUILD_ID__;
 const globalRootId = `mslx-elements-ai-global-root-${pluginVersion.replaceAll('.', '-')}`;
 const runtimeKey = '__MSLX_ELEMENTS_AI_RUNTIME__';
 
 type ElementsAiRuntime = {
   version: string;
+  buildId?: string;
   unmount: () => void;
 };
 
@@ -21,7 +24,7 @@ function mountGlobalLauncher() {
   if (typeof document === 'undefined') return;
 
   const activeRuntime = window[runtimeKey];
-  if (activeRuntime?.version === pluginVersion && document.getElementById(globalRootId)) return;
+  if (activeRuntime?.version === pluginVersion && activeRuntime.buildId === buildId && document.getElementById(globalRootId)) return;
 
   // MSLX can load a newly installed plugin asset without recreating the SPA page.
   // Tear down the previous runtime and legacy mount nodes so the new launcher is
@@ -44,6 +47,7 @@ function mountGlobalLauncher() {
 
   window[runtimeKey] = {
     version: pluginVersion,
+    buildId,
     unmount: () => {
       app.unmount();
       root.remove();

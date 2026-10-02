@@ -13,9 +13,53 @@ static class MslFrpTests
 
     public static IEnumerable<(string Name, Func<Task> Run)> Cases()
     {
+        yield return ("MSLFRP missing login waits and resumes without exposing credentials", async () =>
+        {
+            var scenario = new Scenario(); using var service = scenario.Service();
+            var login = new TaskCompletionSource<string>(); var prompted = 0;
+            var host = Host with { MslFrpToken = null, LoginMslFrp = ct => { prompted++; return login.Task.WaitAsync(ct); } };
+            var task = service.ListNodesAsync(host, default);
+            Check(prompted == 1 && scenario.Requests == 0 && !task.IsCompleted, "missing login did not wait");
+            login.SetResult("msl-secret");
+            var receipt = JsonSerializer.Serialize(await task);
+            Check(scenario.Requests == 2 && !receipt.Contains("secret"), "login did not resume safely");
+        });
+        yield return ("MSLFRP expired login resumes on HTTP and provider 401, never forbidden", async () =>
+        {
+            foreach (var mode in new[] { "http", "provider", "forbidden" })
+            {
+                var calls = 0; var prompts = 0;
+                using var service = new MslFrpService(new HttpClient(new Handler(req =>
+                {
+                    calls++;
+                    if (calls == 1) return Task.FromResult(mode == "provider" ? Packet(null, 401) : new HttpResponseMessage(mode == "http" ? HttpStatusCode.Unauthorized : HttpStatusCode.Forbidden));
+                    Check(req.Headers.Authorization!.Parameter == "renewed", "fresh login not used");
+                    return Task.FromResult(Packet(System.Array.Empty<object>()));
+                })));
+                var host = Host with { LoginMslFrp = _ => { prompts++; return Task.FromResult("renewed"); } };
+                if (mode == "forbidden") { await Fails(() => service.ListTunnelsAsync(host, default)); Check(prompts == 0 && calls == 1, "permission error retried"); }
+                else { await service.ListTunnelsAsync(host, default); Check(prompts == 1 && calls == 2, "expired login not resumed"); }
+            }
+        });
+        yield return ("MSLFRP login waiting is cancellable before cloud writes", async () =>
+        {
+            var scenario = new Scenario(); using var service = scenario.Service(); using var cancel = new CancellationTokenSource();
+            var host = Host with { MslFrpToken = null, LoginMslFrp = ct => new TaskCompletionSource<string>().Task.WaitAsync(ct) };
+            var task = service.CreateAsync(Input with { ImportToPanel = false }, host, cancel.Token); cancel.Cancel();
+            try { await task; throw new Exception("cancellation ignored"); } catch (OperationCanceledException) { }
+            Check(scenario.CloudWrites == 0, "write occurred before login");
+        });
+        yield return ("MSLFRP node picker excludes offline nodes and creation honors selected node", async () =>
+        {
+            var scenario = new Scenario(); using var service = scenario.Service(); var calls = 0;
+            var host = Host with { SelectMslFrpNode = (nodes, _) => { calls++; Check(nodes.Count == 1 && !nodes.ToJsonString().Contains("secret"), "unsafe options"); return Task.FromResult<object>(new { nodeId = 7 }); } };
+            Check(JsonSerializer.Serialize(await service.SelectNodeAsync(host, default)).Contains("7") && calls == 1, "selection lost");
+            scenario.Node["status"] = 0; await Fails(() => service.SelectNodeAsync(host, default)); Check(calls == 1, "offline node offered");
+            await Fails(() => service.CreateAsync(Input, host with { SelectedMslFrpNodeId = 9 }, default)); Check(scenario.CloudWrites == 0, "different node created");
+        });
         yield return ("MSLFRP tools enforce administrator scope and sensitive-operation approval", async () =>
         {
-            var names = new[] { "list_mslfrp_nodes", "list_mslfrp_tunnels", "create_mslfrp_tunnel", "import_mslfrp_tunnel" };
+            var names = new[] { "list_mslfrp_nodes", "list_mslfrp_tunnels", "create_mslfrp_tunnel", "import_mslfrp_tunnel", "select_mslfrp_node" };
             var tools = new MslxToolService(null!, null!, null!, new("user", false, "scope"), Host, null!, null!, null!);
             using var args = JsonDocument.Parse("{}");
             foreach (var name in names)

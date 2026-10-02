@@ -115,6 +115,7 @@ public sealed class ToolApproval
 
 public sealed class ToolQuestion
 {
+    public string Kind { get; set; } = "question";
     public string Id { get; set; } = string.Empty;
     public string Question { get; set; } = string.Empty;
     public List<string> Options { get; set; } = [];

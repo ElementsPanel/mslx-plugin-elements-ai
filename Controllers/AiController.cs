@@ -125,7 +125,7 @@ public sealed class AiController(AiDataStore store, AiChatService chat, TaskProg
     [HttpPost("questions/{id}")]
     public ActionResult<ApiResponse<bool>> Question(string id, [FromBody] QuestionInput input)
     {
-        if (!chat.RespondToQuestion(CurrentUser(), id, input.Answer))
+        if (!chat.RespondToQuestion(CurrentUser(), id, input.Answer, Request.Headers["x-mslfrp-token"].FirstOrDefault()))
             return NotFound(Failure<bool>("交互问题不存在、已结束或账号权限已变化。", 404));
         return Ok(Packet(true));
     }

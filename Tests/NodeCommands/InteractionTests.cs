@@ -7,6 +7,28 @@ static class InteractionTests
 {
     public static IEnumerable<(string Name, Func<Task> Run)> Cases()
     {
+        yield return ("MSLFRP interactions validate owner and choice without persisting credentials", async () =>
+        {
+            var chat = new AiChatService(null!, null!, null!, null!, null!, null!, null!, null!);
+            var user = new UserContext("alice", true, "scope");
+            foreach (var kind in new[] { "mslfrp_login", "mslfrp_node" })
+            {
+                var message = new ChatMessage(); var context = new DefaultHttpContext(); context.Response.Body = new MemoryStream();
+                var emitterType = typeof(AiChatService).GetNestedType("SseEmitter", BindingFlags.NonPublic)!;
+                var emitter = Activator.CreateInstance(emitterType, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, [context.Response], null)!;
+                var task = (Task<string>)typeof(AiChatService).GetMethod("WaitForChoiceAsync", BindingFlags.NonPublic | BindingFlags.Instance)!
+                    .Invoke(chat, [kind, "请选择", new List<string> { "#7", "#9" }, message, 0, user, emitter, CancellationToken.None])!;
+                var id = message.Question!.Id;
+                Check(!chat.RespondToQuestion(user with { UserId = "bob" }, id, "#7", "secret"), "wrong user responded");
+                await Throws<ToolException>(() => Task.FromResult(chat.RespondToQuestion(user, id, "bad")));
+                Check(!task.IsCompleted, "invalid answer consumed wait");
+                Check(chat.RespondToQuestion(user, id, "#7", kind == "mslfrp_login" ? "secret" : null), "valid answer rejected");
+                Check(await task == (kind == "mslfrp_login" ? "secret" : "#7"), "answer lost");
+                Check(!System.Text.Json.JsonSerializer.Serialize(message).Contains("secret"), "credential persisted");
+                Check(!System.Text.Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray()).Contains("secret"), "credential streamed");
+                Check(chat.GetInteractionStatus(user).QuestionIds.Length == 0, "finished wait remained active");
+            }
+        });
         yield return ("waiting for an answer keeps the connection alive without completing or auto-approving", async () =>
         {
             var answer = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);

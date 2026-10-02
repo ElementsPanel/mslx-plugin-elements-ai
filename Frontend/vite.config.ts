@@ -6,6 +6,9 @@ import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 import UnoCSS from 'unocss/vite';
 
 export default defineConfig({
+  define: {
+    __ELEMENTS_AI_BUILD_ID__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     createExternal({
       externals: {
