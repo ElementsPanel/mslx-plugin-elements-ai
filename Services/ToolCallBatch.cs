@@ -105,7 +105,7 @@ public sealed class ToolCallBatch
         "list_instances" or "get_instance" or "read_terminal" or "wait_for_terminal_update"
         or "list_nodes" or "list_files" or "read_file" or "search_resources" or "list_resource_versions"
         or "list_msl_cores" or "list_msl_core_versions" or "list_msl_java_versions" or "wait_for_task"
-        or "list_mslfrp_nodes" or "list_mslfrp_tunnels" or "select_mslfrp_node";
+        or "list_tunnels" or "list_mslfrp_nodes" or "list_mslfrp_tunnels" or "select_mslfrp_node";
 
     private static string Serialize(object value) => JsonSerializer.Serialize(value, JsonOptions);
 

@@ -13,6 +13,48 @@ static class MslFrpTests
 
     public static IEnumerable<(string Name, Func<Task> Run)> Cases()
     {
+        yield return ("panel start and scoped deletions verify IDs and status without exposing config", async () =>
+        {
+            foreach (var action in new[] { "start", "delete_panel", "delete_cloud" })
+            {
+                var writes = 0; var exists = true; var running = false;
+                var panel = action != "delete_cloud";
+                using var service = new MslFrpService(new HttpClient(new Handler(async req =>
+                {
+                    Check(req.RequestUri!.Host == (panel ? "panel.test" : "user.mslmc.net"), "wrong deletion scope");
+                    Check(panel ? req.Headers.Authorization is null : !req.Headers.Contains("x-user-token"), "credential crossed scope");
+                    if (req.Method == HttpMethod.Get) return Packet(exists ? new[] { new { id = 3, name = "test", status = running, config = "secret" } } : System.Array.Empty<object>());
+                    writes++; var body = await req.Content!.ReadFromJsonAsync<JsonObject>();
+                    Check(body!["id"]!.GetValue<int>() == 3, "wrong tunnel ID");
+                    Check(req.RequestUri.AbsolutePath == (action == "start" ? "/api/frp/action" : panel ? "/api/frp/delete" : "/api/frp/deleteTunnel"), "wrong action endpoint");
+                    if (action == "start") { Check(body["action"]!.GetValue<string>() == "start", "wrong action"); running = true; } else exists = false;
+                    return Packet(null);
+                })));
+                Check(!JsonSerializer.Serialize(await (panel ? service.ListPanelTunnelsAsync(Host, default) : service.ListTunnelsAsync(Host, default))).Contains("secret"), "config leaked");
+                await Fails(() => action == "start" ? service.StartPanelTunnelAsync(99, Host, default) : service.DeleteTunnelAsync(99, panel, Host, default));
+                Check(writes == 0, "missing target was mutated");
+                var result = action == "start" ? await service.StartPanelTunnelAsync(3, Host, default) : await service.DeleteTunnelAsync(3, panel, Host, default);
+                var receipt = JsonSerializer.Serialize(result.Value);
+                Check(writes == 1 && receipt.Contains("\"verified\":true") && receipt.Contains(action == "start" ? "\"running\":true" : "\"deleted\":true"), "status not verified");
+                if (action == "start") { await service.StartPanelTunnelAsync(3, Host, default); Check(writes == 1, "already running tunnel restarted"); }
+            }
+        });
+        yield return ("tunnel mutations preserve accepted results and never retry uncertain writes", async () =>
+        {
+            foreach (var uncertain in new[] { true, false })
+            {
+                var writes = 0;
+                using var service = new MslFrpService(new HttpClient(new Handler(req =>
+                {
+                    if (req.Method == HttpMethod.Post) { writes++; if (uncertain) throw new HttpRequestException(); return Task.FromResult(Packet(null)); }
+                    if (writes > 0) throw new HttpRequestException();
+                    return Task.FromResult(Packet(new[] { new { id = 3, status = false } }));
+                })));
+                if (uncertain) await Fails(() => service.DeleteTunnelAsync(3, true, Host, default));
+                else { var result = await service.DeleteTunnelAsync(3, true, Host, default); Check(JsonSerializer.Serialize(result.Value).Contains("\"deleteAccepted\":true"), "accepted deletion lost"); }
+                Check(writes == 1, "mutation retried");
+            }
+        });
         yield return ("MSLFRP missing login waits and resumes without exposing credentials", async () =>
         {
             var scenario = new Scenario(); using var service = scenario.Service();
@@ -59,7 +101,7 @@ static class MslFrpTests
         });
         yield return ("MSLFRP tools enforce administrator scope and sensitive-operation approval", async () =>
         {
-            var names = new[] { "list_mslfrp_nodes", "list_mslfrp_tunnels", "create_mslfrp_tunnel", "import_mslfrp_tunnel", "select_mslfrp_node" };
+            var names = new[] { "list_mslfrp_nodes", "list_mslfrp_tunnels", "create_mslfrp_tunnel", "import_mslfrp_tunnel", "select_mslfrp_node", "list_tunnels", "start_tunnel", "delete_tunnel", "delete_mslfrp_tunnel" };
             var tools = new MslxToolService(null!, null!, null!, new("user", false, "scope"), Host, null!, null!, null!);
             using var args = JsonDocument.Parse("{}");
             foreach (var name in names)
@@ -69,6 +111,7 @@ static class MslFrpTests
                 await Fails(() => tools.ExecuteAsync(name, args.RootElement, null, default));
             }
             Check(MslxToolService.SensitiveTools.Contains(names[2]) && MslxToolService.SensitiveTools.Contains(names[3]), "write lacks approval");
+            foreach (var name in new[] { "start_tunnel", "delete_tunnel", "delete_mslfrp_tunnel" }) Check(MslxToolService.SensitiveTools.Contains(name), "tunnel mutation lacks approval");
             var context = new DefaultHttpContext();
             context.Request.Headers["x-mslfrp-token"] = "msl-secret";
             Check(MslxHostRequestContext.Capture(context).MslFrpToken == "msl-secret", "MSL login not captured");

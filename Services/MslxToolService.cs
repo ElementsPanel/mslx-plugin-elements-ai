@@ -59,7 +59,7 @@ public sealed class MslxToolService(
     public static readonly HashSet<string> SensitiveTools =
     [
         "send_command", "execute_node_command", "update_instance", "create_instance", "delete_instance",
-        "edit_file", "create_file", "delete_file", "download_resource", "create_mslfrp_tunnel", "import_mslfrp_tunnel"
+        "edit_file", "create_file", "delete_file", "download_resource", "create_mslfrp_tunnel", "import_mslfrp_tunnel", "start_tunnel", "delete_tunnel", "delete_mslfrp_tunnel"
     ];
 
     public static JsonArray Definitions(bool admin)
@@ -165,6 +165,10 @@ public sealed class MslxToolService(
         tools.Add(Define("list_msl_java_versions", "MSL镜像源：List Java versions available for online installation by MSLX on this host. This is read-only.", new JsonObject()));
         if (admin)
         {
+            tools.Add(Define("list_tunnels", "List local MSLX panel tunnels with panel IDs, names, providers and process status. Panel IDs differ from MSLFRP cloud tunnel IDs. No credentials/configuration returned; does not target a selected remote MSLX node.", new JsonObject()));
+            tools.Add(Define("start_tunnel", "Start one explicitly requested existing local MSLX panel tunnel. First use list_tunnels to verify panelTunnelId (not a cloud tunnel ID). Does not import/create tunnels. An accepted start is not proof that the tunnel is reachable; inspect returned running/verified fields.", new JsonObject { ["panelTunnelId"] = IntegerSchema(1, int.MaxValue) }, "panelTunnelId"));
+            tools.Add(Define("delete_tunnel", "Delete one explicitly requested local MSLX panel tunnel using panelTunnelId from list_tunnels. Removes the local client configuration only; never deletes its cloud tunnel. Does not target a selected remote MSLX node. Ask which side to delete if scope is ambiguous. Never retry an unknown write without querying current state.", new JsonObject { ["panelTunnelId"] = IntegerSchema(1, int.MaxValue) }, "panelTunnelId"));
+            tools.Add(Define("delete_mslfrp_tunnel", "Delete one explicitly requested MSLFRP cloud tunnel from the logged-in MSL account using tunnelId from list_mslfrp_tunnels. Does not delete local MSLX client configurations. Ask which side to delete if scope is ambiguous. Waits for MSL login when needed. Never retry an unknown write without querying current state.", new JsonObject { ["tunnelId"] = IntegerSchema(1, int.MaxValue) }, "tunnelId"));
             tools.Add(Define("select_mslfrp_node", "Let the user choose an available online MSLFRP node. Waits for MSL login and user selection, then returns the selected node ID and capabilities. Use this before creating a tunnel unless the user already specified an exact node. Create the tunnel using this selected node ID.", new JsonObject()));
             tools.Add(Define("list_mslfrp_nodes", "List MSLFRP nodes, supported tunnel/transport protocols, open port ranges, and safe account quota information. Uses the MSL login already saved in this browser by the panel's Create Tunnel > MSLFrp page. MSLFRP node IDs are different from MSLX node IDs. Credentials are never returned.", new JsonObject()));
             tools.Add(Define("list_mslfrp_tunnels", "List tunnels belonging to the browser's logged-in MSL account, with exact cloud tunnel IDs and safe connection parameters. Use to check an uncertain creation result or select an existing tunnel for import. Does not return credentials or raw configurations.", new JsonObject()));
@@ -210,7 +214,7 @@ public sealed class MslxToolService(
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (name is "select_mslfrp_node" or "list_mslfrp_nodes" or "list_mslfrp_tunnels" or "create_mslfrp_tunnel" or "import_mslfrp_tunnel")
+        if (name is "list_tunnels" or "start_tunnel" or "delete_tunnel" or "delete_mslfrp_tunnel" or "select_mslfrp_node" or "list_mslfrp_nodes" or "list_mslfrp_tunnels" or "create_mslfrp_tunnel" or "import_mslfrp_tunnel")
         {
             if (!user.IsAdmin) throw new ToolException("仅管理员可以执行 MSLFRP 工具。");
             var current = SDK.MSLX.Config.Users.GetUserById(user.UserId);
@@ -225,6 +229,10 @@ public sealed class MslxToolService(
         return name switch
         {
             "list_instances" => Result(ListInstances()),
+            "list_tunnels" => Result(await mslFrp.ListPanelTunnelsAsync(hostRequest, cancellationToken)),
+            "start_tunnel" => await mslFrp.StartPanelTunnelAsync(RequiredInt(args, "panelTunnelId", 1, int.MaxValue), hostRequest, cancellationToken),
+            "delete_tunnel" => await mslFrp.DeleteTunnelAsync(RequiredInt(args, "panelTunnelId", 1, int.MaxValue), true, hostRequest, cancellationToken),
+            "delete_mslfrp_tunnel" => await mslFrp.DeleteTunnelAsync(RequiredInt(args, "tunnelId", 1, int.MaxValue), false, hostRequest, cancellationToken),
             "select_mslfrp_node" => Result(await mslFrp.SelectNodeAsync(hostRequest, cancellationToken)),
             "list_mslfrp_nodes" => Result(await mslFrp.ListNodesAsync(hostRequest, cancellationToken)),
             "list_mslfrp_tunnels" => Result(await mslFrp.ListTunnelsAsync(hostRequest, cancellationToken)),

@@ -28,6 +28,7 @@ function setup(api, storage = memoryStorage(), user = vue.reactive({ token: 'a' 
   const errors = [];
   new Function('require', 'exports', 'window', code)((name) => {
     if (name === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {} };
+    if (name === './mslFrpOAuth') return { loginMslFrp() {} };
     if (name === './mslFrpLogin') return { useMslFrpLogin() {} };
     if (name === '../api') return Object.assign(api, { InteractionUnavailableError });
     if (name === 'tdesign-vue-next') return { MessagePlugin: { error: (message) => errors.push(message) } };
@@ -44,6 +45,7 @@ function setup(api, storage = memoryStorage(), user = vue.reactive({ token: 'a' 
   const storage = memoryStorage();
   const api = { getStatus: async () => status('alice') };
   const first = setup(api, storage);
+  assert.equal(first.chat.toolLabel('select_mslfrp_node'), '让用户选择节点');
   await first.chat.refreshStatus();
   first.chat.selectedModel.value = 'preset:second';
   first.chat.permissionMode.value = 'full';

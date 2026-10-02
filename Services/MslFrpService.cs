@@ -27,6 +27,50 @@ public sealed class MslFrpService(HttpClient client) : IDisposable
     private const string ApiBase = "https://user.mslmc.net";
     public void Dispose() => client.Dispose();
 
+    public async Task<object> ListPanelTunnelsAsync(MslxHostRequestContext host, CancellationToken cancellationToken) =>
+        (await PanelListAsync(host, cancellationToken)).Select(n => Project(n, "id", "name", "service", "status")).ToArray();
+
+    public async Task<ToolExecutionResult> StartPanelTunnelAsync(int id, MslxHostRequestContext host, CancellationToken cancellationToken)
+    {
+        if (id <= 0) throw new ToolException("面板隧道 ID 必须为正整数。");
+        var tunnel = (await PanelListAsync(host, cancellationToken)).SingleOrDefault(n => Number(n, "id") == id)
+            ?? throw new ToolException("本机面板中不存在该隧道，请先查询 list_tunnels，勿使用云端隧道 ID。");
+        if (Running(tunnel) == true) return new() { Value = new { panelTunnelId = id, panelNodeId = "local", running = true, alreadyRunning = true } };
+        await SendAsync("/api/frp/action", host, cancellationToken, new { id, action = "start" }, panel: true);
+        var result = new JsonObject { ["panelTunnelId"] = id, ["panelNodeId"] = "local", ["startAccepted"] = true, ["verified"] = false };
+        try
+        {
+            var current = (await PanelListAsync(host, cancellationToken)).SingleOrDefault(n => Number(n, "id") == id);
+            result["running"] = Running(current);
+            result["verified"] = current is not null && Running(current).HasValue;
+        }
+        catch (Exception error) when (error is ToolException or OperationCanceledException)
+        { result["nextAction"] = "启动指令已接受，状态尚未确认，请查询 list_tunnels。"; }
+        return new() { Value = result };
+    }
+
+    public async Task<ToolExecutionResult> DeleteTunnelAsync(int id, bool panel, MslxHostRequestContext host, CancellationToken cancellationToken)
+    {
+        if (id <= 0) throw new ToolException("隧道 ID 必须为正整数。");
+        var before = panel ? await PanelListAsync(host, cancellationToken) : await TunnelsAsync(host, cancellationToken);
+        var tunnel = before.SingleOrDefault(n => Number(n, "id") == id)
+            ?? throw new ToolException(panel ? "本机面板隧道不存在，请查询 list_tunnels。" : "当前 MSL 账号下的云端隧道不存在，请查询 list_mslfrp_tunnels。");
+        await SendAsync(panel ? "/api/frp/delete" : "/api/frp/deleteTunnel", host, cancellationToken, new { id }, panel);
+        var result = new JsonObject { [panel ? "panelTunnelId" : "tunnelId"] = id,
+            ["scope"] = panel ? "local_panel" : "mslfrp_cloud", ["deleteAccepted"] = true, ["verified"] = false };
+        try
+        {
+            var after = panel ? await PanelListAsync(host, cancellationToken) : await TunnelsAsync(host, cancellationToken);
+            result["deleted"] = !after.Any(n => Number(n, "id") == id);
+            result["verified"] = true;
+        }
+        catch (Exception error) when (error is ToolException or OperationCanceledException)
+        { result["nextAction"] = "删除指令已接受，请查询对应隧道列表确认结果，勿盲目重复删除。"; }
+        return new() { Value = result };
+    }
+
+    private static bool? Running(JsonNode? tunnel) => tunnel?["status"] is JsonValue v && v.TryGetValue<bool>(out var running) ? running : null;
+
     public async Task<object> ListNodesAsync(MslxHostRequestContext host, CancellationToken cancellationToken)
     {
         var account = await CloudAsync("userInfo", host, cancellationToken);

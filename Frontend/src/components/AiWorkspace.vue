@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
+import { loginMslFrp } from './mslFrpOAuth';
 import { useMslFrpLogin } from './mslFrpLogin';
 import { SendIcon, StopIcon } from 'tdesign-icons-vue-next';
 import {
@@ -303,6 +304,29 @@ async function answerQuestion(message: ChatMessage, selected?: string) {
   }
 }
 
+const loginSubmitting = ref('');
+let loginController: AbortController | undefined;
+async function openMslFrpLogin(message: ChatMessage) {
+  if (!message.question || loginSubmitting.value) return;
+  const id = message.question.id;
+  const active = new AbortController();
+  loginController = active;
+  loginSubmitting.value = id;
+  try {
+    await loginMslFrp(active.signal);
+    if (!active.signal.aborted && message.question?.id === id) await answerQuestion(message, '继续');
+  } catch (error) {
+    if (!active.signal.aborted && !(error instanceof DOMException && error.name === 'AbortError'))
+      MessagePlugin.error(messageOf(error));
+  } finally {
+    if (loginController === active) { loginSubmitting.value = ''; loginController = undefined; }
+  }
+}
+watch(() => messages.value.some(m => m.question?.id === loginSubmitting.value), pending => {
+  if (!pending) loginController?.abort();
+});
+onBeforeUnmount(() => loginController?.abort());
+
 useMslFrpLogin(messages, message => answerQuestion(message, '继续'));
 
 async function syncInteractions() {
@@ -485,7 +509,8 @@ function confirmDeleteModel(source: 'personal' | 'preset', model: ModelOption) {
 
 function toolLabel(name?: string) {
   const labels: Record<string, string> = {
-    select_mslfrp_node: '选择 MSLFRP 节点', list_mslfrp_nodes: 'MSLFRP：查询节点', list_mslfrp_tunnels: 'MSLFRP：查询隧道',
+    list_tunnels: '查询面板隧道', start_tunnel: '启动隧道', delete_tunnel: '删除面板隧道', delete_mslfrp_tunnel: '删除 MSLFRP 云端隧道',
+    select_mslfrp_node: '让用户选择节点', list_mslfrp_nodes: 'MSLFRP：查询节点', list_mslfrp_tunnels: 'MSLFRP：查询隧道',
     create_mslfrp_tunnel: '创建 MSLFRP 隧道', import_mslfrp_tunnel: '导入 MSLFRP 隧道',
     list_nodes: '查询节点', execute_node_command: '执行节点命令',
     ask_user: '询问用户', list_instances: '查询实例', get_instance: '读取实例', read_terminal: '读取终端',
@@ -592,11 +617,11 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div v-if="message.question" class="question-box">
-              <p>{{ message.question.question }}</p>
+              <p v-if="message.question.kind !== 'mslfrp_login'">{{ message.question.question }}</p>
               <div class="option-list">
                 <t-button v-for="option in message.question.options" :key="option" size="small" variant="outline" :disabled="Boolean(questionSubmitting)" @click="answerQuestion(message, option)">{{ option }}</t-button>
               </div>
-              <t-button v-if="message.question.kind === 'mslfrp_login'" size="small" :loading="questionSubmitting === message.question.id" @click="answerQuestion(message, '继续')">已登录，继续</t-button>
+              <t-button v-if="message.question.kind === 'mslfrp_login'" size="small" :loading="loginSubmitting === message.question.id" @click="openMslFrpLogin(message)">登录 MSLFRP</t-button>
               <div v-if="!message.question.kind || message.question.kind === 'question'" class="custom-answer">
                 <input v-model="questionAnswers[message.question.id]" maxlength="500" placeholder="或输入自定义回答" @keydown.enter.prevent="answerQuestion(message)" />
                 <t-button size="small" :loading="questionSubmitting === message.question.id" @click="answerQuestion(message)">提交</t-button>

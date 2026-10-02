@@ -25,7 +25,8 @@ const api = {
 const exports_ = {};
 new Function('require', 'exports', 'window', code)((name) => {
   if (name === 'vue') return { ...vue, onMounted() {}, onBeforeUnmount() {} };
-  if (name === './mslFrpLogin') return { useMslFrpLogin() {} };
+  if (name === './mslFrpOAuth') return { loginMslFrp() {} };
+    if (name === './mslFrpLogin') return { useMslFrpLogin() {} };
     if (name === '../api') return api;
   if (name === 'tdesign-icons-vue-next') return {};
   if (name === 'tdesign-vue-next') return { DialogPlugin: {}, MessagePlugin: { success() {}, error: (error) => errors.push(error) } };

@@ -62,6 +62,7 @@ function compile(file, inlineTemplate = false) {
   const workspace = {};
   new Function('require', 'exports', 'window', compile('AiWorkspace.vue'))((name) => {
     if (name === 'vue') return hooks;
+    if (name === './mslFrpOAuth') return { loginMslFrp() {} };
     if (name === './mslFrpLogin') return { useMslFrpLogin() {} };
     if (name === '../api') return {};
     if (name === 'tdesign-icons-vue-next') return {};
