@@ -12,7 +12,7 @@ import type {
   PermissionMode,
 } from './types/ai';
 
-const base = '/api/plugins/mslx-plugin-elements-ai/ai';
+const base = '/api/plugin/mslx-plugin-elements-ai/ai';
 
 function userStore() {
   const stores = (window as any).MSLX_Stores;

@@ -22,7 +22,7 @@ const response = (status, data, code = status) => new Response(JSON.stringify({ 
 (async () => {
   result = response(200, true);
   assert.equal(await api.respondToApproval('approval', true), true);
-  assert.equal(captured.url, '/api/plugins/mslx-plugin-elements-ai/ai/approvals/approval');
+  assert.equal(captured.url, '/api/plugin/mslx-plugin-elements-ai/ai/approvals/approval');
   assert.equal(captured.init.headers['x-user-token'], 'panel-token');
   assert.deepEqual(JSON.parse(captured.init.body), { approved: true });
   result = response(404, false);

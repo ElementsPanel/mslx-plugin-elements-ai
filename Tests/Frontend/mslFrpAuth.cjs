@@ -30,7 +30,7 @@ async function run(isAdmin, mslToken, storageBlocked = false) {
     new AbortController().signal, (event) => events.push(event));
   assert.equal(calls.length, 1);
   const { url, init } = calls[0];
-  assert.equal(url, '/api/plugins/mslx-plugin-elements-ai/ai/chat');
+  assert.equal(url, '/api/plugin/mslx-plugin-elements-ai/ai/chat');
   assert.equal(init.headers['x-user-token'], 'panel-secret');
   assert.equal(init.headers['x-mslfrp-token'], isAdmin && !storageBlocked && mslToken ? mslToken : undefined);
   assert.equal(JSON.parse(init.body).currentNodeId, storageBlocked ? 'local' : 'worker-1');

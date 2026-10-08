@@ -11,7 +11,7 @@ namespace MSLX.Plugin.ElementsAI.Services;
 
 public sealed class NodeCommandService(HttpClient client) : IDisposable
 {
-    public const string Route = "api/plugins/mslx-plugin-elements-ai/node-command";
+    public const string Route = "api/plugin/mslx-plugin-elements-ai/node-command";
     private const int MaxOutputChars = 16000;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 

@@ -69,7 +69,7 @@ var tests = new List<(string Name, Func<Task> Run)>
                 Check(!message.Headers.Contains("x-node-id"), "discovery inherited a stale node header");
                 return Nodes();
             }
-            Check(message.RequestUri!.ToString() == "https://worker.test/panel/" + NodeCommandService.Route, "wrong command target");
+            Check(message.RequestUri!.ToString() == "https://worker.test/panel/api/plugin/mslx-plugin-elements-ai/node-command", "wrong command target");
             Check(message.Headers.GetValues("x-node-id").Single() == "worker-1", "wrong routing ID");
             var body = await message.Content!.ReadFromJsonAsync<NodeCommandRequest>();
             Check(body!.Command == "echo test" && body.TimeoutSeconds == 4 && body.WorkingDirectory == "/tmp", "command payload changed");

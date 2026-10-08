@@ -12,7 +12,7 @@ namespace MSLX.Plugin.ElementsAI.Controllers;
 [ApiController]
 [Authorize]
 [AiExceptionFilter]
-[Route("api/plugins/mslx-plugin-elements-ai/ai")]
+[Route("api/plugin/mslx-plugin-elements-ai/ai")]
 public sealed class AiController(AiDataStore store, AiChatService chat, TaskProgressService tasks) : ControllerBase
 {
     [HttpGet("tasks/{taskId}")]
