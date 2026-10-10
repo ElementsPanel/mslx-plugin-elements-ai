@@ -604,6 +604,7 @@ onBeforeUnmount(() => {
             <div v-else-if="message.pending && !message.reasoning" class="working-indicator" role="status">
               <span class="braille-spinner" aria-hidden="true"></span><span>工作中</span>
             </div>
+            <div v-if="message.workComplete && !message.pending" class="work-complete" role="status">工作完成</div>
           </div>
 
           <div v-else-if="message.role === 'tool'" class="tool-row" :class="{ failed: message.ok === false }">
@@ -765,6 +766,7 @@ onBeforeUnmount(() => {
 .assistant-message { width: min(780px, 92%); }
 .working-indicator { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem; color: var(--td-text-color-secondary); font-size: 14px; }
 .braille-spinner { flex-shrink: 0; width: 1em; color: var(--td-brand-color); font-family: ui-monospace, monospace; font-size: 18px; line-height: 1; }
+.work-complete { margin-top: 0.5rem; color: var(--td-text-color-secondary); font-size: 12px; }
 .braille-spinner::before { content: '⠋'; animation: braille-spin 0.8s steps(1, end) infinite; }
 @keyframes braille-spin {
   0%, 100% { content: '⠋'; } 10% { content: '⠙'; } 20% { content: '⠹'; }

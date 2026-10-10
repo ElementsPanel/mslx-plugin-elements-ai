@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 
 import {
   ChatAddIcon,
   ChatIcon,
+  CloseIcon,
   HistoryIcon,
   SettingIcon,
 } from 'tdesign-icons-vue-next';
@@ -115,6 +116,18 @@ defineExpose({ open });
               <SettingIcon size="20px" />
             </t-button>
           </t-tooltip>
+          <t-tooltip content="关闭侧边栏" placement="bottom">
+            <t-button
+              class="drawer-header-close"
+              theme="default"
+              shape="square"
+              variant="text"
+              aria-label="关闭侧边栏"
+              @click="visible = false"
+            >
+              <CloseIcon size="20px" />
+            </t-button>
+          </t-tooltip>
         </div>
       </div>
     </template>
@@ -142,6 +155,23 @@ defineExpose({ open });
   display: flex;
   align-items: center;
   gap: 0.15rem;
+}
+
+/* 分隔线画在按钮外侧，避免 padding/border 改变 square 按钮的固定尺寸与图标居中 */
+.drawer-header-close {
+  position: relative;
+  margin-left: 0.55rem;
+}
+
+.drawer-header-close::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -0.28rem;
+  width: 1px;
+  height: 1.1em;
+  background: var(--td-component-border);
+  transform: translateY(-50%);
 }
 
 .instance-ai-sidebar :deep(.ai-workspace) {

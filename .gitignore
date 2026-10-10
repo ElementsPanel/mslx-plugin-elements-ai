@@ -368,6 +368,7 @@ Frontend/.vite/
 Frontend/*.tsbuildinfo
 .pnpm-store/
 .vscode/
+.workbuddy/
 
 # Local plugin runtime data and environment overrides
 plugin-data/
