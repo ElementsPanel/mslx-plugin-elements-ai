@@ -583,149 +583,151 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <div v-if="checking" class="center-state"><t-loading /> 正在连接 Elements AI…</div>
+    <Transition name="workspace-page" mode="out-in" @enter="scrollToEnd">
+      <div v-if="checking" key="loading" class="center-state"><t-loading /> 正在连接 Elements AI…</div>
 
-    <template v-else-if="view === 'chat'">
-      <main ref="list" class="message-list">
-        <div v-if="!messages.length" class="empty-state">
-          <div class="empty-mark">✦</div>
-          <h2>有什么可以帮你？</h2>
-          <p v-if="status?.ready">我可以检查实例状态、分析终端、修改配置文件，以及搜索和下载模组。</p>
-          <p v-else>尚未配置模型。请先在“设置”中添加个人模型，或让管理员添加预设模型。</p>
-          <div v-if="currentInstanceId" class="context-hint">当前上下文会优先使用实例 #{{ currentInstanceId }}</div>
+      <div v-else-if="view === 'chat'" key="chat" class="chat-view">
+        <main ref="list" class="message-list">
+          <div v-if="!messages.length" class="empty-state">
+            <div class="empty-mark">✦</div>
+            <h2>有什么可以帮你？</h2>
+            <p v-if="status?.ready">我可以检查实例状态、分析终端、修改配置文件，以及搜索和下载模组。</p>
+            <p v-else>尚未配置模型。请先在“设置”中添加个人模型，或让管理员添加预设模型。</p>
+            <div v-if="currentInstanceId" class="context-hint">当前上下文会优先使用实例 #{{ currentInstanceId }}</div>
+          </div>
+
+          <article v-for="(message, index) in messages" :key="index" class="message-row" :class="message.role">
+            <div v-if="message.role === 'user'" class="message-bubble user-bubble">{{ message.content }}</div>
+
+            <div v-else-if="message.role === 'assistant'" class="assistant-message">
+              <ThinkingLine v-if="message.reasoning" :content="message.reasoning" :pending="message.pending" />
+              <MarkdownMessage v-if="message.content" :content="message.content" />
+              <div v-else-if="message.pending && !message.reasoning" class="working-indicator" role="status">
+                <span class="braille-spinner" aria-hidden="true"></span><span>工作中</span>
+              </div>
+              <div v-if="message.workComplete && !message.pending" class="work-complete" role="status">工作完成</div>
+            </div>
+
+            <div v-else-if="message.role === 'tool'" class="tool-row" :class="{ failed: message.ok === false }">
+              <ToolReceipt :message="message" :label="toolLabel(message.tool)" />
+              <div v-if="message.approval" class="approval-box">
+                <p>该操作需要你的确认：</p>
+                <pre>{{ message.approval.arguments }}</pre>
+                <div class="inline-actions">
+                  <t-button size="small" theme="danger" :loading="approvalSubmitting === message.approval.id" @click="decideApproval(message, true)">允许</t-button>
+                  <t-button size="small" variant="outline" :disabled="Boolean(approvalSubmitting)" @click="decideApproval(message, false)">拒绝</t-button>
+                </div>
+              </div>
+              <div v-if="message.question" class="question-box">
+                <p v-if="message.question.kind !== 'mslfrp_login'">{{ message.question.question }}</p>
+                <div class="option-list">
+                  <t-button v-for="option in message.question.options" :key="option" size="small" variant="outline" :disabled="Boolean(questionSubmitting)" @click="answerQuestion(message, option)">{{ option }}</t-button>
+                </div>
+                <t-button v-if="message.question.kind === 'mslfrp_login'" size="small" :loading="loginSubmitting === message.question.id" @click="openMslFrpLogin(message)">登录 MSLFRP</t-button>
+                <div v-if="!message.question.kind || message.question.kind === 'question'" class="custom-answer">
+                  <input v-model="questionAnswers[message.question.id]" maxlength="500" placeholder="或输入自定义回答" @keydown.enter.prevent="answerQuestion(message)" />
+                  <t-button size="small" :loading="questionSubmitting === message.question.id" @click="answerQuestion(message)">提交</t-button>
+                </div>
+              </div>
+              <FileDiffView v-if="message.diff" :diff="message.diff" />
+            </div>
+
+            <div v-else class="error-message">{{ message.content }}</div>
+          </article>
+        </main>
+
+        <div v-if="retryText" class="activity-strip">
+          <span>{{ retryText }}</span>
         </div>
+        <div v-if="error" class="error-strip">{{ error }}</div>
+        <TaskProgressList :tasks="activeTasks" />
 
-        <article v-for="(message, index) in messages" :key="index" class="message-row" :class="message.role">
-          <div v-if="message.role === 'user'" class="message-bubble user-bubble">{{ message.content }}</div>
-
-          <div v-else-if="message.role === 'assistant'" class="assistant-message">
-            <ThinkingLine v-if="message.reasoning" :content="message.reasoning" :pending="message.pending" />
-            <MarkdownMessage v-if="message.content" :content="message.content" />
-            <div v-else-if="message.pending && !message.reasoning" class="working-indicator" role="status">
-              <span class="braille-spinner" aria-hidden="true"></span><span>工作中</span>
+        <footer class="composer">
+          <div class="input-shell">
+            <textarea v-model="draft" maxlength="4000" rows="3" :disabled="loading || !status?.ready" placeholder="输入你的需求；Shift+Enter 换行" @keydown="keydown"></textarea>
+            <div class="input-footer">
+              <span>{{ draft.length }} / 4000</span>
+              <t-button v-if="loading" class="composer-action" theme="danger" variant="text" size="small" shape="square" aria-label="停止" title="停止" @click="stop"><StopIcon size="18px" /></t-button>
+              <t-button v-else class="composer-action" variant="text" size="small" shape="square" aria-label="发送" title="发送" :disabled="!canSend" @click="send"><SendIcon size="18px" /></t-button>
             </div>
-            <div v-if="message.workComplete && !message.pending" class="work-complete" role="status">工作完成</div>
           </div>
-
-          <div v-else-if="message.role === 'tool'" class="tool-row" :class="{ failed: message.ok === false }">
-            <ToolReceipt :message="message" :label="toolLabel(message.tool)" />
-            <div v-if="message.approval" class="approval-box">
-              <p>该操作需要你的确认：</p>
-              <pre>{{ message.approval.arguments }}</pre>
-              <div class="inline-actions">
-                <t-button size="small" theme="danger" :loading="approvalSubmitting === message.approval.id" @click="decideApproval(message, true)">允许</t-button>
-                <t-button size="small" variant="outline" :disabled="Boolean(approvalSubmitting)" @click="decideApproval(message, false)">拒绝</t-button>
-              </div>
-            </div>
-            <div v-if="message.question" class="question-box">
-              <p v-if="message.question.kind !== 'mslfrp_login'">{{ message.question.question }}</p>
-              <div class="option-list">
-                <t-button v-for="option in message.question.options" :key="option" size="small" variant="outline" :disabled="Boolean(questionSubmitting)" @click="answerQuestion(message, option)">{{ option }}</t-button>
-              </div>
-              <t-button v-if="message.question.kind === 'mslfrp_login'" size="small" :loading="loginSubmitting === message.question.id" @click="openMslFrpLogin(message)">登录 MSLFRP</t-button>
-              <div v-if="!message.question.kind || message.question.kind === 'question'" class="custom-answer">
-                <input v-model="questionAnswers[message.question.id]" maxlength="500" placeholder="或输入自定义回答" @keydown.enter.prevent="answerQuestion(message)" />
-                <t-button size="small" :loading="questionSubmitting === message.question.id" @click="answerQuestion(message)">提交</t-button>
-              </div>
-            </div>
-            <FileDiffView v-if="message.diff" :diff="message.diff" />
+          <div class="composer-controls">
+            <label>
+              <span>操作模式</span>
+              <select v-model="permissionMode" :disabled="loading">
+                <option value="default">默认确认</option>
+                <option value="full">完整操作</option>
+              </select>
+            </label>
+            <label class="model-select">
+              <span>模型</span>
+              <select v-model="selectedModel" :disabled="loading || !models.length">
+                <option value="" disabled>请选择模型</option>
+                <option v-for="model in models" :key="model.id" :value="model.id">{{ model.name }} · {{ model.model }}</option>
+              </select>
+            </label>
           </div>
+        </footer>
+      </div>
 
-          <div v-else class="error-message">{{ message.content }}</div>
-        </article>
+      <main v-else-if="view === 'history'" key="history" class="panel-view">
+        <div class="panel-heading">
+          <div><h2>对话历史</h2></div>
+          <div class="inline-actions">
+            <t-button size="small" variant="outline" @click="view = 'chat'">返回聊天</t-button>
+            <t-button size="small" variant="outline" :disabled="historyLoading || !histories.length" @click="selectedHistory = selectedHistory.length === histories.length ? [] : histories.map(item => item.id)">{{ histories.length && selectedHistory.length === histories.length ? '取消全选' : '全选' }}</t-button>
+            <t-button size="small" theme="danger" variant="outline" :disabled="!selectedHistory.length" @click="confirmDeleteHistory">删除所选</t-button>
+          </div>
+        </div>
+        <div v-if="historyLoading" class="center-state"><t-loading /> 正在读取历史…</div>
+        <div v-else-if="!histories.length" class="center-state">还没有保存的对话。</div>
+        <div v-else class="history-list">
+          <article v-for="item in histories" :key="item.id" class="history-item">
+            <input type="checkbox" :checked="selectedHistory.includes(item.id)" @change="toggleHistory(item.id, ($event.target as HTMLInputElement).checked)" />
+            <button type="button" @click="openConversationItem(item.id)">
+              <strong>{{ item.title || '未命名对话' }}</strong>
+              <span>{{ item.modelName }} · {{ formatDate(item.updatedAt) }}</span>
+            </button>
+          </article>
+        </div>
       </main>
 
-      <div v-if="retryText" class="activity-strip">
-        <span>{{ retryText }}</span>
-      </div>
-      <div v-if="error" class="error-strip">{{ error }}</div>
-      <TaskProgressList :tasks="activeTasks" />
-
-      <footer class="composer">
-        <div class="input-shell">
-          <textarea v-model="draft" maxlength="4000" rows="3" :disabled="loading || !status?.ready" placeholder="输入你的需求；Shift+Enter 换行" @keydown="keydown"></textarea>
-          <div class="input-footer">
-            <span>{{ draft.length }} / 4000</span>
-            <t-button v-if="loading" class="composer-action" theme="danger" variant="text" size="small" shape="square" aria-label="停止" title="停止" @click="stop"><StopIcon size="18px" /></t-button>
-            <t-button v-else class="composer-action" variant="text" size="small" shape="square" aria-label="发送" title="发送" :disabled="!canSend" @click="send"><SendIcon size="18px" /></t-button>
-          </div>
-        </div>
-        <div class="composer-controls">
-          <label>
-            <span>操作模式</span>
-            <select v-model="permissionMode" :disabled="loading">
-              <option value="default">默认确认</option>
-              <option value="full">完整操作</option>
-            </select>
-          </label>
-          <label class="model-select">
-            <span>模型</span>
-            <select v-model="selectedModel" :disabled="loading || !models.length">
-              <option value="" disabled>请选择模型</option>
-              <option v-for="model in models" :key="model.id" :value="model.id">{{ model.name }} · {{ model.model }}</option>
-            </select>
-          </label>
-        </div>
-      </footer>
-    </template>
-
-    <main v-else-if="view === 'history'" class="panel-view">
-      <div class="panel-heading">
-        <div><h2>对话历史</h2></div>
-        <div class="inline-actions">
+      <main v-else key="settings" class="panel-view settings-view">
+        <div class="panel-heading">
+          <div><h2>Elements AI 设置</h2></div>
           <t-button size="small" variant="outline" @click="view = 'chat'">返回聊天</t-button>
-          <t-button size="small" variant="outline" :disabled="historyLoading || !histories.length" @click="selectedHistory = selectedHistory.length === histories.length ? [] : histories.map(item => item.id)">{{ histories.length && selectedHistory.length === histories.length ? '取消全选' : '全选' }}</t-button>
-          <t-button size="small" theme="danger" variant="outline" :disabled="!selectedHistory.length" @click="confirmDeleteHistory">删除所选</t-button>
         </div>
-      </div>
-      <div v-if="historyLoading" class="center-state"><t-loading /> 正在读取历史…</div>
-      <div v-else-if="!histories.length" class="center-state">还没有保存的对话。</div>
-      <div v-else class="history-list">
-        <article v-for="item in histories" :key="item.id" class="history-item">
-          <input type="checkbox" :checked="selectedHistory.includes(item.id)" @change="toggleHistory(item.id, ($event.target as HTMLInputElement).checked)" />
-          <button type="button" @click="openConversationItem(item.id)">
-            <strong>{{ item.title || '未命名对话' }}</strong>
-            <span>{{ item.modelName }} · {{ formatDate(item.updatedAt) }}</span>
-          </button>
-        </article>
-      </div>
-    </main>
+        <div v-if="settingsLoading" class="center-state"><t-loading /> 正在读取设置…</div>
+        <template v-else>
+          <section class="settings-card">
+            <div><h3>发送偏好</h3><p>开启后按 Enter 发送，Shift+Enter 换行；关闭后使用 Ctrl/⌘+Enter 发送。</p></div>
+            <div class="settings-action"><t-switch v-model="sendOnEnter" /><t-button size="small" :loading="savingPreferences" @click="persistPreferences">保存</t-button></div>
+          </section>
 
-    <main v-else class="panel-view settings-view">
-      <div class="panel-heading">
-        <div><h2>Elements AI 设置</h2></div>
-        <t-button size="small" variant="outline" @click="view = 'chat'">返回聊天</t-button>
-      </div>
-      <div v-if="settingsLoading" class="center-state"><t-loading /> 正在读取设置…</div>
-      <template v-else>
-        <section class="settings-card">
-          <div><h3>发送偏好</h3><p>开启后按 Enter 发送，Shift+Enter 换行；关闭后使用 Ctrl/⌘+Enter 发送。</p></div>
-          <div class="settings-action"><t-switch v-model="sendOnEnter" /><t-button size="small" :loading="savingPreferences" @click="persistPreferences">保存</t-button></div>
-        </section>
+          <section class="model-section">
+            <div class="section-heading"><div><h3>个人模型</h3></div><t-button size="small" @click="editModel('personal')">添加模型</t-button></div>
+            <div v-if="!personalModels.length" class="muted-box">暂无个人模型。</div>
+            <div v-else class="model-grid">
+              <article v-for="model in personalModels" :key="model.id" class="model-card">
+                <div><strong>{{ model.name }}</strong><span>{{ model.model }}</span><small>{{ model.endpoint }}</small></div>
+                <div class="inline-actions"><t-button size="small" variant="outline" @click="editModel('personal', model)">编辑</t-button><t-button size="small" theme="danger" variant="text" @click="confirmDeleteModel('personal', model)">删除</t-button></div>
+              </article>
+            </div>
+          </section>
 
-        <section class="model-section">
-          <div class="section-heading"><div><h3>个人模型</h3></div><t-button size="small" @click="editModel('personal')">添加模型</t-button></div>
-          <div v-if="!personalModels.length" class="muted-box">暂无个人模型。</div>
-          <div v-else class="model-grid">
-            <article v-for="model in personalModels" :key="model.id" class="model-card">
-              <div><strong>{{ model.name }}</strong><span>{{ model.model }}</span><small>{{ model.endpoint }}</small></div>
-              <div class="inline-actions"><t-button size="small" variant="outline" @click="editModel('personal', model)">编辑</t-button><t-button size="small" theme="danger" variant="text" @click="confirmDeleteModel('personal', model)">删除</t-button></div>
-            </article>
-          </div>
-        </section>
-
-        <section v-if="status?.admin" class="model-section">
-          <div class="section-heading"><div><h3>管理员预设</h3></div><t-button size="small" @click="editModel('preset')">添加预设</t-button></div>
-          <div v-if="!presets.length" class="muted-box">暂无管理员预设。</div>
-          <div v-else class="model-grid">
-            <article v-for="model in presets" :key="model.id" class="model-card">
-              <div><strong>{{ model.name }}</strong><span>{{ model.model }}</span><small>{{ model.endpoint }}</small></div>
-              <div class="inline-actions"><t-button size="small" variant="outline" @click="editModel('preset', model)">编辑</t-button><t-button size="small" theme="danger" variant="text" @click="confirmDeleteModel('preset', model)">删除</t-button></div>
-            </article>
-          </div>
-        </section>
-      </template>
-    </main>
+          <section v-if="status?.admin" class="model-section">
+            <div class="section-heading"><div><h3>管理员预设</h3></div><t-button size="small" @click="editModel('preset')">添加预设</t-button></div>
+            <div v-if="!presets.length" class="muted-box">暂无管理员预设。</div>
+            <div v-else class="model-grid">
+              <article v-for="model in presets" :key="model.id" class="model-card">
+                <div><strong>{{ model.name }}</strong><span>{{ model.model }}</span><small>{{ model.endpoint }}</small></div>
+                <div class="inline-actions"><t-button size="small" variant="outline" @click="editModel('preset', model)">编辑</t-button><t-button size="small" theme="danger" variant="text" @click="confirmDeleteModel('preset', model)">删除</t-button></div>
+              </article>
+            </div>
+          </section>
+        </template>
+      </main>
+    </Transition>
 
     <t-dialog v-model:visible="modelDialog" :header="modelDraft.id ? '编辑模型' : '添加模型'" attach="body" width="560px" :confirm-btn="null" :cancel-btn="null">
       <form class="model-form" @submit.prevent="persistModel">
@@ -753,6 +755,13 @@ onBeforeUnmount(() => {
 .ai-header p { margin: 0.3rem 0 0; color: var(--td-text-color-secondary); font-size: 12px; }
 .instance-badge { padding: 0.18rem 0.48rem; border-radius: 999px; color: var(--td-brand-color); background: color-mix(in srgb, var(--td-brand-color) 12%, transparent); font-size: 11px; font-weight: 600; }
 .header-actions, .inline-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.chat-view { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; }
+.workspace-page-enter-active { transition: opacity 180ms ease-out; }
+.workspace-page-leave-active { transition: opacity 140ms ease-in; pointer-events: none; }
+.workspace-page-enter-from, .workspace-page-leave-to { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .workspace-page-enter-active, .workspace-page-leave-active { transition: none; }
+}
 .message-list { flex: 1; overflow-y: auto; padding: 1.2rem clamp(0.8rem, 3vw, 3rem); background: color-mix(in srgb, var(--td-bg-color-page) 55%, var(--td-bg-color-container)); }
 .empty-state { min-height: 100%; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--td-text-color-secondary); }
 .empty-state h2 { margin: 0.4rem 0; color: var(--td-text-color-primary); font-size: 28px; font-weight: 700; line-height: 1.4; }
