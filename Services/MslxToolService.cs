@@ -51,7 +51,7 @@ public sealed class MslxToolService(
 {
     private const int MaxTextBytes = 64 * 1024;
     private const string MslApiBase = "https://api.mslmc.cn";
-    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.0";
+    private const string MslApiUserAgent = "MSLX-Elements-AI/0.1.1";
     private readonly Dictionary<string, string> _fileReads = new(StringComparer.Ordinal);
     private TerminalWaitService? _terminal;
     private TerminalWaitService Terminal => _terminal ??= new(console, RequireTerminalAccess);

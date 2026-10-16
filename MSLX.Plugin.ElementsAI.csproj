@@ -6,6 +6,7 @@
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
     <OutputType>Library</OutputType>
     <AssemblyName>MSLX.Plugin.ElementsAI</AssemblyName>
+    <Version>0.1.1</Version>
     <RootNamespace>MSLX.Plugin.ElementsAI</RootNamespace>
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <Generate>false</Generate>

@@ -3,7 +3,7 @@ import TDesign from 'tdesign-vue-next';
 import InstanceAiDialog from './views/InstanceAiDialog.vue';
 
 declare const __ELEMENTS_AI_BUILD_ID__: string;
-const pluginVersion = '0.1.0';
+const pluginVersion = '0.1.1';
 const buildId = __ELEMENTS_AI_BUILD_ID__;
 const globalRootId = `mslx-elements-ai-global-root-${pluginVersion.replaceAll('.', '-')}`;
 const runtimeKey = '__MSLX_ELEMENTS_AI_RUNTIME__';

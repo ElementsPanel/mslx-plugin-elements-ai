@@ -9,7 +9,7 @@ const code = ts.transpileModule(fs.readFileSync(path.join(root, 'Frontend/src/pl
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const runtimeKey = '__MSLX_ELEMENTS_AI_RUNTIME__';
-const rootId = 'mslx-elements-ai-global-root-0-1-0';
+const rootId = 'mslx-elements-ai-global-root-0-1-1';
 const roots = new Map();
 const Sidebar = {};
 let mounts = 0;
@@ -25,7 +25,7 @@ const document = {
 const legacyRoot = document.createElement();
 legacyRoot.id = rootId;
 document.body.appendChild(legacyRoot);
-const window = { [runtimeKey]: { version: '0.1.0', unmount: () => legacyUnmounts++ } };
+const window = { [runtimeKey]: { version: '0.1.1', unmount: () => legacyUnmounts++ } };
 
 function load(buildId) {
   const queued = [];
@@ -42,7 +42,7 @@ function load(buildId) {
     }, exports_, window, document, (action) => queued.push(action), buildId,
   );
   queued.forEach((action) => action());
-  assert.equal(exports_.pluginConfig.version, '0.1.0');
+  assert.equal(exports_.pluginConfig.version, '0.1.1');
 }
 
 load('build-a');
